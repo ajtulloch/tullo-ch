@@ -1,0 +1,40 @@
+!!! 5
+html(lang='en')
+  head
+    block head
+      meta(charset='utf-8')
+      title
+        block title
+          = locals.name
+      link(rel='alternate', href=locals.url+'/feed.xml', type='application/rss+xml', title=locals.description)
+      link(rel='shortcut icon', href='/favicon.ico')
+      link(rel='stylesheet', href='/css/style.css')
+      script(type="text/x-mathjax-config").
+        MathJax.Hub.Config({      
+          tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+          TeX: { equationNumbers: {autoNumber: "AMS"} }
+        });
+      script(type="text/javascript", src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML")
+  body
+    header
+      div.container
+        div.gravatar
+          img(src="http://www.gravatar.com/avatar/" + locals.gravatar + "?s=200").gravatar
+        div#brand
+          h1.site-title
+            a.blog-title(href=locals.url)= locals.name
+             — 
+            span= locals.subtitle
+        nav(role="navigation").site-navigation.main-navigation
+          a(href="/about/") About
+          |  | 
+          a(href="https://github.com/ajtulloch") GitHub
+          |  | 
+          a(href="/static/cv.pdf") CV
+       div.clear
+    div.container
+      block content
+    footer
+      div.container
+        block footer
+          p.copyright &copy;#{ new Date().getFullYear() } #{ locals.owner }

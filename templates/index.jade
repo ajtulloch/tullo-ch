@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  include mixins
+  - var articles = _.chain(contents.articles._.directories).map(function(item) { return item.index }).compact().sortBy(function(item) { return -item.date }).first(locals.index_articles).value()
+  each article in articles
+    article.post
+      h1.title
+        a(href=article.url)= article.title
+      div.post-meta
+        mixin date(article.date)
+      div.the-content
+        section.intro-content!= article.intro
+        mixin more(article)
+      div.meta.clearfix
+        mixin tags(article.metadata.tags)

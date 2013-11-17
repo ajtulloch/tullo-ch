@@ -1,0 +1,19 @@
+{
+    "locals": {
+        "url": "http://localhost:8080",
+        "name": "Andrew Tulloch",
+        "owner": "Andrew Tulloch",
+        "description": "Machine Learning, Statistics, Systems",
+        "subtitle": "Machine Learning, Statistics, Systems",
+        "index_articles": 1000,
+        "gravatar": "c4ade7596c93b909699000666b47bc53",
+        "disqus": "ajtulloch"
+    },
+    "plugins": [
+        "./node_modules/wintersmith-stylus/",
+        "./node_modules/wintersmith-less/"
+    ],
+    "require": {
+        "_": "underscore"
+    }
+}
