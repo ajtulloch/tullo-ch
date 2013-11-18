@@ -9,13 +9,14 @@ html(lang='en')
       link(rel='alternate', href=locals.url+'/feed.xml', type='application/rss+xml', title=locals.description)
       link(rel='shortcut icon', href='/favicon.ico')
       link(rel='stylesheet', href='/css/style.css')
-      mixin google_analytics(locals.google_analytics)
       mixin mathjax
+      mixin mixpanel(locals.mixpanel)
+      mixin google_analytics(locals.google_analytics)
   body
-    header
+    header#header
       block header
         mixin header(locals)
-    div.container
+    div.container#main
       block content
     footer
       div.container
