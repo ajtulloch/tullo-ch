@@ -9,12 +9,8 @@ html(lang='en')
       link(rel='alternate', href=locals.url+'/feed.xml', type='application/rss+xml', title=locals.description)
       link(rel='shortcut icon', href='/favicon.ico')
       link(rel='stylesheet', href='/css/style.css')
-      script(type="text/x-mathjax-config").
-        MathJax.Hub.Config({      
-          tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
-          TeX: { equationNumbers: {autoNumber: "AMS"} }
-        });
-      script(type="text/javascript", src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML")
+      mixin google_analytics(locals.google_analytics)
+      mixin mathjax
   body
     header
       div.container

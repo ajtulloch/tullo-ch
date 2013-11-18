@@ -7,7 +7,8 @@
         "subtitle": "Machine Learning, Statistics, Systems",
         "index_articles": 1000,
         "gravatar": "c4ade7596c93b909699000666b47bc53",
-        "disqus": "ajtulloch"
+        "disqus": "ajtulloch",
+        "google_analytics": "UA-44466528-2"
     },
     "plugins": [
         "./node_modules/wintersmith-stylus/",
