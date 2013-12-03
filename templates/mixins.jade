@@ -34,6 +34,9 @@ mixin more(article)
     p
       a(href=article.url).more Continue...
 
+mixin description(locals)
+  meta(description=locals.name + " - " + locals.description)
+      
 mixin google_analytics(account)
   script(type='text/javascript').
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
