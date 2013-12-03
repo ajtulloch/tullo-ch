@@ -74,7 +74,8 @@ from message passing in the factor graph.  The update equations are
   \langle \mathbf{x}, \mathbf{\mu} \rangle}{\Sigma} \right) \right)
 \end{align} 
 
-where $\Sigma^{2} = \beta^{2} + \langle \mathbf{x}, \mathbf{\sigma^{2}}$ represents the 'total variance' of the sample,
+where $\Sigma^{2} = \beta^{2} + \langle \mathbf{x},
+\mathbf{\sigma^{2}} \rangle$ represents the 'total variance' of the sample,
 $v(t) = \frac{\phi(t)}{\Phi(t)}$ and $w(t) = v(t) \cdot (v(t) + t)$
 represent the additive and multiplicative corrections to the truncated
 Gaussian, with $\phi, \Phi$ being the PDF and CDF, respectively, of
@@ -93,7 +94,7 @@ The implementation is quite straightforward - see the example code in the
 
 The main body of the code is inlined below.
 
-<script src="https://gist.github.com/ajtulloch/7720412.js"></script>
+<script src="https://gist.github.com/ajtulloch/7724979.js"></script>
 
 It's a fairly straightforward implementation of the equations
 described previously. This approach doesn't deal at all with
