@@ -7,3 +7,6 @@ deploy:
 	git commit -m "Deploy"; \
 	git push "git@github.com:ajtulloch/tullo-ch.git" master:gh-pages --force && \
 	rm -rf .git
+
+crush:
+	zsh ./pngcrush.sh
