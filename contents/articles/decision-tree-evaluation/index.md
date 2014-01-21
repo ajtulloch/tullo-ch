@@ -5,7 +5,7 @@ date: 2 Dec 2013
 ---
 
 [Our previous article][speeding-up-training] on decision trees dealt
-with techniques to speed up the evaluation process, though often the
+with techniques to speed up the training process, though often the
 performance-critical component of the machine learning pipeline is the
 prediction side. Training takes place offline, whereas predictions are
 often in the hot path - consider ranking documents in response to a
