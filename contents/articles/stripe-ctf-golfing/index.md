@@ -15,7 +15,7 @@ To be clear - these aren't high-quality (or high-scoring) solutions.
 I'm not especially proud of these. They are just *small* solutions,
 and somewhat interesting for that reason.
 
-[Stripe CTF]: stripe-ctf.com
+[Stripe CTF]: http://stripe-ctf.com
 
 ## Level 0 ##
 
@@ -37,9 +37,7 @@ The net diff is two lines changed.
 
 The challenge is to craft a Git commit message with a commit hash less
 than (lexicographically) than a given difficutly level.  The reference
-implementation is fairly simple, and attached below.
-
-<script src="https://gist.github.com/ajtulloch/3474342810ff771009d0.js"></script>
+implementation is fairly simple, written in Bash.
 
 The bottleneck is the SHA1 computation - we have to compute the hashes
 as fast as possible, and the naive solution just doesn't cut it.  To
