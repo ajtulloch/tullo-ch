@@ -1,6 +1,6 @@
 ---
 template: article.jade
-title: Speeding up Isotonic Regression in sckit-learn
+title: Speeding up Isotonic Regression in sckit-learn by 5,000x
 date: 9 Mar 2014
 ---
 
@@ -9,14 +9,14 @@ technique for fitting an increasing to a given dataset.
 
 A classic use is in improving the calibration of a probabilistic
 classifier.  Say we have a set of 0/1 datapoints (e.g. ad clicks), and
-we train a probabilistic classifier on this dataset.  
+we train a probabilistic classifier on this dataset.
 
 Unfortunately, we find that our classifier is poorly calibrated - for
 cases where it predicts ~50% probability of a click, there is actually
 a 20% probability of a click, and so on.
 
 In this case, we can learn an isotonic regression model on the output
-of the classifier, where our increasing function we fit is $\mathcal{P}(+ \, | \, 
+of the classifier, where our increasing function we fit is $\mathcal{P}(+ \, | \,
 \text{classifier's prediction})$.  The constraint that the function is
 increasing means that the ordering of events is preserved by the
 transformation, which is an important constraint.
@@ -28,16 +28,16 @@ function.
 For an example of this usage, see the Google
 [Ad Click Prediction - A View from the Trenches][adclickprediction]
 paper from KDD 2013, which covers this technique in section 7. The
-[AdPredictor ICML Paper][adpredictor] paper also uses this technique
+[AdPredictor ICML paper][adpredictor] paper also uses this technique
 for calibrating a Naive Bayes predictor.
 
 [adpredictor]: http://research.microsoft.com/pubs/122779/AdPredictor%20ICML%202010%20-%20final.pdf
 
-We'll now detail how we made the [Scikit Learn][] implementation of
+We'll now detail how we made the [`scikit-learn`][scikit-learn] implementation of
 isotonic regression more than ~5,000x faster, while reducing the
 number of lines of code in the implementation.
 
-[Scikit Learn]: http://scikit-learn.org/
+[scikit-learn]: http://scikit-learn.org/
 
 ## The Pooled Adjacent Violators Algorithm ##
 
@@ -66,10 +66,13 @@ I wrote the current scikit-learn implementation after seeing the
 previous implementation was much slower than equivalent
 implementations in R, etc.
 
-The original algorithm used an alternative (dual) dual algorithm,
-which seemed to scale quite slowly (approximately $\mathcal{O}(N^2)$),
-due to the $\mathcal{O}(N)$ list pop in the inner loop (lines 29 and
-39 of the below gist)
+The original algorithm used the active set, which is in some sense
+mathematically dual to PAVA, and seemed to scale quite slowly
+(approximately $\mathcal{O}(N^2)$). This is despite being implemented
+in Cython, which compiles Python-like code to C, and is generally very
+fast. After some profiling, it turned out this slowness was due to the
+$\mathcal{O}(N)$ list pop in the inner loop (lines 29 and 39 of the
+below gist)
 
 <script src="https://gist.github.com/ajtulloch/9447845.js"></script>
 
@@ -114,6 +117,9 @@ eliminated all Python API calls, and are being translated into
 straightforward C.
 
 ![](https://f.cloud.github.com/assets/1121581/2368157/97ba2770-a798-11e3-8bbb-9693a0f62ffa.png)
+
+Performance
+-----------
 
 Benchmark results indicate the simple PAVA algorithm performs much
 faster - approximately 5,000x faster with 1,000,000 datapoints,
