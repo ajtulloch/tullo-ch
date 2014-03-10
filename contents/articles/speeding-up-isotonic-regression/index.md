@@ -1,11 +1,11 @@
 ---
 template: article.jade
-title: Speeding up Isotonic Regression in sckit-learn by 5,000x
+title: Speeding up isotonic regression in sckit-learn by 5,000x
 date: 9 Mar 2014
 ---
 
-[Isotonic regression][]  is a useful non-parametric regression
-technique for fitting an increasing to a given dataset.
+[Isotonic regression][] is a useful non-parametric regression
+technique for fitting an increasing function to a given dataset.
 
 A classic use is in improving the calibration of a probabilistic
 classifier.  Say we have a set of 0/1 datapoints (e.g. ad clicks), and
@@ -31,13 +31,9 @@ paper from KDD 2013, which covers this technique in section 7. The
 [AdPredictor ICML paper][adpredictor] paper also uses this technique
 for calibrating a Naive Bayes predictor.
 
-[adpredictor]: http://research.microsoft.com/pubs/122779/AdPredictor%20ICML%202010%20-%20final.pdf
-
-We'll now detail how we made the [`scikit-learn`][scikit-learn] implementation of
-isotonic regression more than ~5,000x faster, while reducing the
-number of lines of code in the implementation.
-
-[scikit-learn]: http://scikit-learn.org/
+We'll now detail how we made the [`scikit-learn`][scikit-learn]
+implementation of isotonic regression more than ~5,000x faster, while
+reducing the number of lines of code in the implementation.
 
 ## The Pooled Adjacent Violators Algorithm ##
 
@@ -47,7 +43,6 @@ for fitting weighted isotonic regressions to data.
 PAVA is a linear-time algorithm for fitting an isotonic regression
 model. There is a nice visualization and explanation at
 [Fabian Pedregosa's blog][fpblog].
-
 
 > The algorithm sweeps through the data looking for violations of the
 > monotonicity constraint. When it finds one, it adjusts the estimate to
@@ -90,9 +85,12 @@ due to maintaining and updating the auxiliary data structure
 
 Thus, it seemed promising to seek to improve the performance of this
 code. Profiling (using `Instruments.app` on OS X) indicated that the
-heavy memory allocation and the list pop were the key causes of
+heavy memory allocation and the list `pop` were the key causes of
 slowdown, so an efficient Cython implementation of PAVA seemed a
-natural choice.
+natural choice.  PAVA can be implemented entirely in-place (so no
+additionally memory allocations are needed) and does not require any
+operations beyond indexing into arrays, so can be efficiently compiled
+by Cython.
 
 Once a simple benchmarking script had been written (to quickly
 validate performance improvements), we set about implementing PAVA.
@@ -122,9 +120,9 @@ Performance
 -----------
 
 Benchmark results indicate the simple PAVA algorithm performs much
-faster - approximately 5,000x faster with 1,000,000 datapoints,
+faster - **approximately 5,000x faster with 1,000,000 datapoints,
 approximately 500x faster with 100,000 datapoints, and 14x faster with
-1,000 datapoints.
+1,000 datapoints**.
 
 On a log-log scale, the performance improvements are visualized below
 for two separate datasets - a randomly perturbed version of $\log(1 +
@@ -140,14 +138,14 @@ information has on the performance of the PAVA implementation.
 Stripping the `cdef` block yields the following comparative
 performance:
 
+![](https://f.cloud.github.com/assets/1121581/2368114/bb76e7f4-a796-11e3-8adf-ed59295b4026.png)
+
 Thus, stripping out the type annotations can makes the same Cython algorithm
-~100x-500x slower.
+**~100x-500x slower**.
 
 There's a lesson here in the importance of constant factors when doing
 performance-critical work - and another one on understanding all
 stages of your toolchain.
-
-![](https://f.cloud.github.com/assets/1121581/2368114/bb76e7f4-a796-11e3-8adf-ed59295b4026.png)
 
 A ~100x-500x performance hit from not adding type information is
 incredibly high, and is both a reflection of the speed of
@@ -161,3 +159,5 @@ See the [GitHub pull request][] for more information and discussion.
 [fpblog]: http://fa.bianp.net/blog/2013/isotonic-regression/
 [adclickprediction]: http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/41159.pdf
 [Isotonic regression]: http://en.wikipedia.org/wiki/Isotonic_regression
+[adpredictor]: http://research.microsoft.com/pubs/122779/AdPredictor%20ICML%202010%20-%20final.pdf
+[scikit-learn]: http://scikit-learn.org/
