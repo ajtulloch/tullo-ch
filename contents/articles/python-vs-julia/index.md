@@ -52,13 +52,19 @@ when compared to an equivalent Cython implementation.
 
 ![](https://f.cloud.github.com/assets/1121581/2385599/d0ad76c6-a91f-11e3-84a1-3b2965ba5ea0.png)
 
-In particular, for the active set implementations, Julia is anywhere
-between 5x and 300x faster on the equivalent problem, and the linear
-PAVA implementation, Julia is between 1.1x and 4x faster.
+For the active set implementations, Julia is anywhere between **5x and
+300x faster** on equivalent regression problems.
+
+For the linear PAVA implementation, Julia is between **1.1x and 4x
+faster**.
 
 This certainly indicates Julia is a very attractive choice for
 performance-critical machine learning applications.
 
+See the [iJulia notebook][] for more information on how these
+performance measurements were obtained.
+
+[iJulia notebook]: http://nbviewer.ipython.org/url/gist.githubusercontent.com/ajtulloch/9485996/raw/94b3d0e6bd67256f1f02eebb1463365dbc8b64fc/Julia.ipynb
 [previousarticle]: http://tullo.ch/articles/speeding-up-isotonic-regression/
 [isotonicjl]: https://github.com/ajtulloch/Isotonic.jl
 [sklearn]: https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/_isotonic.pyx
