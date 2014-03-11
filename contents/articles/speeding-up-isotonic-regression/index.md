@@ -1,6 +1,6 @@
 ---
 template: article.jade
-title: Speeding up isotonic regression in sckit-learn by 5,000x
+title: Speeding up isotonic regression in scikit-learn by 5,000x
 date: 9 Mar 2014
 ---
 
@@ -8,7 +8,7 @@ date: 9 Mar 2014
 technique for fitting an increasing function to a given dataset.
 
 A classic use is in improving the calibration of a probabilistic
-classifier.  Say we have a set of 0/1 datapoints (e.g. ad clicks), and
+classifier.  Say we have a set of 0/1 data-points (e.g. ad clicks), and
 we train a probabilistic classifier on this dataset.
 
 Unfortunately, we find that our classifier is poorly calibrated - for
@@ -17,7 +17,7 @@ a 20% probability of a click, and so on.
 
 In this case, we can learn an isotonic regression model on the output
 of the classifier, where our increasing function we fit is $\mathcal{P}(+ \, | \,
-\text{classifier's prediction})$.  The constraint that the function is
+\text{classifiers prediction})$.  The constraint that the function is
 increasing means that the ordering of events is preserved by the
 transformation, which is an important constraint.
 
@@ -120,9 +120,9 @@ Performance
 -----------
 
 Benchmark results indicate the simple PAVA algorithm performs much
-faster - **approximately 5,000x faster with 1,000,000 datapoints,
-approximately 500x faster with 100,000 datapoints, and 14x faster with
-1,000 datapoints**.
+faster - **approximately 5,000x faster with 1,000,000 data-points,
+approximately 500x faster with 100,000 data-points, and 14x faster with
+1,000 data-points**.
 
 On a log-log scale, the performance improvements are visualized below
 for two separate datasets - a randomly perturbed version of $\log(1 +
@@ -145,7 +145,7 @@ Thus, stripping out the type annotations can makes the same Cython algorithm
 
 There's a lesson here in the importance of constant factors when doing
 performance-critical work - and another one on understanding all
-stages of your toolchain.
+stages of your tool-chain.
 
 A ~100x-500x performance hit from not adding type information is
 incredibly high, and is both a reflection of the speed of
