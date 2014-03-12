@@ -14,4 +14,7 @@ block content
       section.content!= page.html
     div.meta.clearfix
       mixin tags(page.metadata.tags)      
-
+    div.comments
+      mixin disqus(locals.disqus_name)
+  
+  
