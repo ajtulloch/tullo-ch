@@ -64,6 +64,10 @@ performance-critical machine learning applications.
 See the [iJulia notebook][] for more information on how these
 performance measurements were obtained.
 
+[Discuss this article on HackerNews.][hn]
+
+[hn]: https://news.ycombinator.com/item?id=7383121
+
 [iJulia notebook]: http://nbviewer.ipython.org/url/gist.githubusercontent.com/ajtulloch/9485996/raw/94b3d0e6bd67256f1f02eebb1463365dbc8b64fc/Julia.ipynb
 [previousarticle]: http://tullo.ch/articles/speeding-up-isotonic-regression/
 [isotonicjl]: https://github.com/ajtulloch/Isotonic.jl

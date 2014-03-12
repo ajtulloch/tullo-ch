@@ -3,6 +3,8 @@ title: About
 template: article.jade
 ---
 
+You can get in touch with me at <mailto:andrew@tullo.ch>.
+
 My academic interests are mostly machine learning, especially 'big
 learning' - distributed and parallel methods applied to large-scale
 problems. I've had experience implementing large-scale machine
