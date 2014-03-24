@@ -4,6 +4,12 @@ title: The Performance of Decision Tree Evaluation Strategies
 date: 2 Dec 2013
 ---
 
+UPDATE: Compiled evaluation is now implemented for
+[scikit-learn](http://scikit-learn.org) regression tree/ensemble
+models, available at
+<https://github.com/ajtulloch/sklearn-compiledtrees> or `pip install
+sklearn-compiledtrees`.
+
 [Our previous article][speeding-up-training] on decision trees dealt
 with techniques to speed up the training process, though often the
 performance-critical component of the machine learning pipeline is the
@@ -29,6 +35,7 @@ improvement indeed.
 
 All code (implementation, drivers, analysis scripts) are available on
 GitHub at the [decisiontrees-performance][] repository.
+
 
 Naive Method
 ------------
