@@ -56,7 +56,7 @@ License: GNU General Public License
 	
 	// Site name size
 	@site-text-size:	16;
-	
+	@site-header-size:	20;
 	// Body text size
 	@body-text-size:	18;
 	
@@ -268,12 +268,11 @@ header {
 	float: left;
 	width: 80%;
 	margin-top: 22px;
-	
 	h1 {
 	    font-family: @body-font;
 	    font-weight: 900;
 	    color: @site-name-color;
-	    .font-size(@site-text-size);
+	    .font-size(@site-header-size);
 	    margin: 0;
 	    padding: 0;
 	    text-transform: uppercase;
@@ -283,6 +282,7 @@ header {
 		text-decoration: none;
 		
 		&:hover {
+                    color: fade(@link-color, 50%);
 		}
 	    } //a
 	    
@@ -295,11 +295,13 @@ header {
 	}// h1
 	
     }// #brand
-    
+    .spacing {
+        clear: both;
+    }
     nav {
 	float: left;
         color: @site-name-color;
-	font-size: 14px;
+	.font-size(@site-text-size);
 		
 	a {
 	    color: @light-grey;
@@ -416,90 +418,90 @@ article {
 }// .page article
 
 
-/* Pagination */
-#pagination {
-    margin-bottom: @margin;
-    width: 100%;
+// /* Pagination */
+// #pagination {
+//     margin-bottom: @margin;
+//     width: 100%;
     
-    .past-page {
-	float: right;
-    }
+//     .past-page {
+// 	float: right;
+//     }
     
-    .next-page {
-	float: left;
-    }
+//     .next-page {
+// 	float: left;
+//     }
     
-}// pagination
+// }// pagination
 
 
 /* Comments */
 
-h3#comments {
-    margin-bottom: ( @margin * 2);
-    font-size: (@body-text-size - 2px);
-}
+// h3#comments {
+//     margin-bottom: ( @margin * 2);
+//     font-size: (@body-text-size - 2px);
+// }
 
-.commentlist {
-    list-style: none;
-    margin: 0;
+// .commentlist {
+//     list-style: none;
+//     margin: 0;
     
-    .comment {
-	margin: 0 0 @margin 50px;
-	padding: 20px;
-	position: relative;
-	list-style: none;
-	-moz-box-shadow: 0 0 3px rgba(0,0,0,0.2);
-	-webkit-box-shadow: 0 0 3px rgba(0,0,0,0.2);
-	box-shadow: 0 0 3px rgba(0,0,0,0.2);
+//     .comment {
+// 	margin: 0 0 @margin 50px;
+// 	padding: 20px;
+// 	position: relative;
+// 	list-style: none;
+// 	-moz-box-shadow: 0 0 3px rgba(0,0,0,0.2);
+// 	-webkit-box-shadow: 0 0 3px rgba(0,0,0,0.2);
+// 	box-shadow: 0 0 3px rgba(0,0,0,0.2);
 	
-	.children {
-	    margin-top: @margin;
-	}
-    }//comment
+// 	.children {
+// 	    margin-top: @margin;
+// 	}
+//     }//comment
     
-    .comment-author {
-	float: left;
-	margin-right: 10px;
+//     .comment-author {
+// 	float: left;
+// 	margin-right: 10px;
 	
-	img {
-	    position: absolute;
-	    left: -50px;
-	    top: 5px;
-	}
+// 	img {
+// 	    position: absolute;
+// 	    left: -50px;
+// 	    top: 5px;
+// 	}
 	
-	.says {
-	    display: none;
-	}
+// 	.says {
+// 	    display: none;
+// 	}
 	
-    }// comment-author
+//     }// comment-author
     
-}//commentlist
+// }//commentlist
 
-// Jetpack 
+// // Jetpack 
 
-.comment-meta {
-    font-size: (@body-text-size - 6px);
-    margin-bottom: 10px;
-}
+// .comment-meta {
+//     font-size: (@body-text-size - 6px);
+//     margin-bottom: 10px;
+// }
 
-.comment-subscription-form, .comment-subscription-form {
-    margin-bottom: 0;
-    font-size: ( @body-text-size - 4px);
-}
+// .comment-subscription-form, .comment-subscription-form {
+//     margin-bottom: 0;
+//     font-size: ( @body-text-size - 4px);
+// }
 
-#respond {
-    margin-bottom: (@margin * 2);
+// #respond {
+//     margin-bottom: (@margin * 2);
     
-    > h3 {
-	font-size: (@body-text-size - 2px);
-	margin-bottom: 20px;
-    }
+//     > h3 {
+// 	font-size: (@body-text-size - 2px);
+// 	margin-bottom: 20px;
+//     }
     
-    form label {
-	color: @light-grey;
-    }
+//     form label {
+// 	color: @light-grey;
+//     }
     
-}// respond
+// }// respond
 
 footer {
     text-align: center;
@@ -582,11 +584,21 @@ html[xmlns] .clearfix {
     
     header {
 	padding: 0;
-	
 	.gravatar {
 	    float: none;
+            clear: both;
+            display: block;
+            margin: 0 auto;
 	}
-	
+        
+        #brand {
+            float: none;
+        }
+        
+        nav {
+            float: none;
+        }
+
 	hgroup {
 	    width: 100%;
 	}

@@ -62,8 +62,8 @@ mixin header(locals)
       img(src="http://www.gravatar.com/avatar/" + locals.gravatar + "?s=200").gravatar
     div#brand
       h1.site-title
-        a.blog-title(href=locals.url)= locals.name
-         — 
+        a.blog-title(href=locals.url)= locals.name 
+        span —
         span= locals.subtitle
     nav(role="navigation").site-navigation.main-navigation
       a(href="/about/") About
@@ -71,7 +71,7 @@ mixin header(locals)
       a(href="https://github.com/ajtulloch") GitHub
       |  | 
       a(href="/static/cv.pdf") CV
-   div.clear
+    div.clear
 
 mixin mixpanel(account)
   script(type="text/javascript").
