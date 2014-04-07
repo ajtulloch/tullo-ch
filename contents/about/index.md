@@ -15,8 +15,18 @@ Python, Go, R, Haskell, Rust, MatLab, and other languages. See my
 + [A highly efficient Go implementation of random forests and boosted decision trees][dt].
 + [A Python implemention of Microsoft's AdPredictor (a Bayesian online probit regression model)][ap].
 + The first Haskell implementations (that I can find) of
-[Hopfield networks][] and [boosted decision trees][bdt].
-+ [A short and sweet Python kernel SVM implementation][svmpy] (for pedagogical purposes).
+[Hopfield networks][] and [gradient boosted decision trees][bdt].
++ [A short and sweet Python kernel SVM implementation][svmpy] (for
+  pedagogical purposes).
+
+I've made (admittedly minor) contributions to larger open-source
+projects such as
+
++ [Improving performance of regression algorithms in `scikit-learn`](https://github.com/scikit-learn/scikit-learn/pull/2944),
++ [Fixing crashes when parsing malformed YAML in Clang](http://reviews.llvm.org/D1236),
++ Minor cleanups to
+  [Chromium](https://codereview.chromium.org/177123004) and
+  [LLVM](http://reviews.llvm.org/D3278)
 
 I'm currently at graduate school in mathematical statistics at
 [Trinity College, Cambridge][]. I'm doing this as part of a PhD in
