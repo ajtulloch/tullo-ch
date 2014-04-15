@@ -22,6 +22,8 @@ Python, Go, R, Haskell, Rust, MatLab, and other languages. See my
 I've made (admittedly minor) contributions to larger open-source
 projects such as
 
+* [Cleanups](https://github.com/torch/cutorch/pull/5) to the [Torch][]
+  deep learning library.
 + [Improving performance of regression algorithms in `scikit-learn`](https://github.com/scikit-learn/scikit-learn/pull/2944),
 + [Fixing crashes when parsing malformed YAML in Clang](http://reviews.llvm.org/D1236),
 + Minor cleanups to
@@ -46,13 +48,15 @@ first on the FICC structuring and then algorithmic trading in the
 last year of my degree.
 
 [GitHub profile]: https://github.com/ajtulloch
-[thesis]: /PDFs/AndrewTulloch-HonoursThesis.pdf
+[Goldman Sachs]: http://www.goldmansachs.com/
+[Hopfield networks]: https://github.com/ajtulloch/hopfield-networks
+[Torch]: http://torch.ch
+[Trinity College, Cambridge]: http://www.trin.cam.ac.uk/
 [University of California, Berkeley]: http://berkeley.edu
 [University of Sydney]: http://sydney.edu.au
-[Trinity College, Cambridge]: http://www.trin.cam.ac.uk/
-[Goldman Sachs]: http://www.goldmansachs.com/
 [ap]: https://github.com/ajtulloch/adpredictor
-[dt]: https://github.com/ajtulloch/decisiontrees
 [bdt]: https://github.com/ajtulloch/haskell-ml
-[Hopfield networks]: https://github.com/ajtulloch/hopfield-networks
+[dt]: https://github.com/ajtulloch/decisiontrees
 [svmpy]: https://github.com/ajtulloch/svmpy
+[thesis]: /PDFs/AndrewTulloch-HonoursThesis.pdf
+
