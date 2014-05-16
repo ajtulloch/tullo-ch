@@ -32,20 +32,20 @@ projects such as
 
 I'm currently at graduate school in mathematical statistics at
 [Trinity College, Cambridge][]. I'm doing this as part of a PhD in
-Statistics at the [University of California, Berkeley][]. Before graduate
-school, I worked on machine learning systems at Facebook from April 2012
-until starting graduate school in October 2013, working on all aspects
-of the advertising machine learning platform, from feature engineering
-to the inference platform to the real-time serving system.
+Statistics at the [University of California, Berkeley][]. Before
+graduate school, I worked on machine learning systems at Facebook from
+April 2012 until starting graduate school in October 2013, working on
+all aspects of the advertising machine learning platform, from feature
+engineering to the inference platform to the real-time serving system.
 
 Before Facebook, I did my honours degree in mathematics at the
 [University of Sydney][], graduating with first class honours and the
 university medal in mathematics, as the student with the highest GPA
-in the Faculty of Science. My [honours thesis][thesis] was on advanced Levy process
-models for multivariate credit risk, supervised by Marek Rutkowsi. I
-interned and then worked at [Goldman Sachs][] in Sydney as a quant,
-first on the FICC structuring and then algorithmic trading in the
-last year of my degree.
+in the Faculty of Science. My [honours thesis][thesis] was on advanced
+Levy process models for multivariate credit risk, supervised by Marek
+Rutkowsi. I interned and then worked at [Goldman Sachs][] in Sydney as
+a quant, first on the FICC structuring and then algorithmic trading in
+the last year of my degree.
 
 [GitHub profile]: https://github.com/ajtulloch
 [Goldman Sachs]: http://www.goldmansachs.com/
