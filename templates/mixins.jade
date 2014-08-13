@@ -1,7 +1,7 @@
 mixin author(authorName)
   - var author = contents.authors[authorName + '.json']
   p.author
-    span.by 
+    span.by
     if author
       a(href='mailto:'+author.metadata.email)= author.metadata.name
     else
@@ -44,29 +44,31 @@ mixin google_analytics(account)
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-    
+
     ga('create', '#{account}', 'tullo.ch');
     ga('send', 'pageview');
 
 mixin mathjax
   script(type="text/x-mathjax-config").
-    MathJax.Hub.Config({      
+    MathJax.Hub.Config({
       tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
       TeX: { equationNumbers: {autoNumber: "AMS"} }
     });
   script(type="text/javascript", src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML")
-      
+
 mixin header(locals)
   div.container
     div.gravatar
       img(src="http://www.gravatar.com/avatar/" + locals.gravatar + "?s=200").gravatar
     div#brand
       h1.site-title
-        a.blog-title(href=locals.url)= locals.name 
+        a.blog-title(href=locals.url)= locals.name
         span —
         span= locals.subtitle
     nav(role="navigation").site-navigation.main-navigation
       a(href="/about/") About
+      |  | 
+      a(href="/academic/") Academic
       |  | 
       a(href="https://github.com/ajtulloch") GitHub
       |  | 
