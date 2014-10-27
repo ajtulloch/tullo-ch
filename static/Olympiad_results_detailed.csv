@@ -1,0 +1,257 @@
+#ID,country,names,Practical exam (max 40),Theoretical exam (max 60),Total,Prize,,task_1,task_2,task_3,task_4,task_5,task_6,task_7,task_8,task_9,task_10
+1,China,Lei Xu,19.771,56.3,76.071,Gold Medal,,24.500,22.000,19.500,11.25,59,36.000,69.500,85.500,16.000,80.250
+2,China,Yuan Fang,25.768,47.541,73.309,Gold Medal,,23.500,22.000,18.000,10,70,27.000,21.000,67.500,41.000,81.167
+3,Russian Federation,Leonid Romashov,32.556,39.712,72.267,Gold Medal,,21.500,20.000,11.000,5.51,56,27.000,36.500,51.500,82.800,66.500
+4,Russian Federation,Vasiliy Vorobyev,28.2,43.408,71.609,Gold Medal,,21.000,11.000,10.500,11.5,37,31.000,59.000,78.500,57.364,74.300
+5,China,Zi-yang Zhang,20.397,50.192,70.588,Gold Medal,,19.500,16.000,16.500,10.5,62,33.000,69.500,77.500,60.400,31.750
+6,Chinese Taipei,Ying Yu Ho,23.385,47.016,70.401,Gold Medal,,23.500,21.000,17.000,8.5,57,26.000,64.500,45.500,27.887,84.500
+7,Germany,Dimitry Ur'evic Loutchko,26.113,44.115,70.228,Gold Medal,,17.500,21.500,15.500,7.45,70,26.000,67.500,24.500,59.322,61.583
+8,Korea Republic,Jae Soo Kim,35,34.721,69.721,Gold Medal,,20.500,15.500,18.500,5.5,18,29.000,5.000,62.500,81.700,80.000
+9,France,Simon Gourdin-Bertin,27.457,40.529,67.986,Gold Medal,,21.500,19.000,18.500,9.5,45,29.000,5.000,50.500,41.310,89.250
+10,Korea Republic,Tae Gon Oh,22.718,45.027,67.745,Gold Medal,,21.500,22.000,12.500,7.5,62,34.000,48.400,47.000,28.242,80.750
+11,Chinese Taipei,Wei-Lun Huang,23.136,44.214,67.349,Gold Medal,,21.500,15.000,12.500,10.25,51,30.000,41.250,77.500,67.377,37.333
+12,Poland,Dawid Grzegorz Lichosyt,37.806,27.458,65.264,Gold Medal,,16.000,3.000,13.500,6.05,44,25.000,17.000,26.000,82.800,92.750
+13,Poland,Krzysztof Cezary Kosinski,28.209,35.5,63.71,Gold Medal,,22.500,5.000,6.500,6.25,37,31.000,47.900,76.000,41.321,93.000
+14,China,Le Yang,13.729,49.136,62.865,Gold Medal,,23.500,22.000,18.500,8.95,51,37.000,66.900,36.000,18.402,47.250
+15,Russian Federation,Stanislav Terehov,25.214,37.564,62.778,Gold Medal,,19.000,15.000,13.500,7.5,31,37.000,30.000,45.500,57.894,58.750
+16,Germany,Philipp Albert Steininger,31.457,30.621,62.078,Gold Medal,,20.500,11.000,15.500,8.25,10,19.000,12.000,48.500,76.139,68.750
+17,Thailand,Bavorn Hongsrichinda,32.136,29.501,61.638,Gold Medal,,21.500,10.000,11.500,7.55,32,23.000,11.500,24.000,61.000,89.750
+18,Russian Federation,Eugeny Nekhoroshev,12.991,48.481,61.472,Gold Medal,,24.000,16.000,12.500,8.5,72,34.000,67.500,62.500,39.521,19.000
+19,Poland,Wojciech Dominik Magon,23.189,37.745,60.935,Gold Medal,,21.500,22.000,12.000,4.75,19,26.500,61.400,35.500,37.150,72.750
+20,Korea Republic,Chang Ho Lee,22.308,37.602,59.911,Gold Medal,,23.500,22.000,12.500,5,16,31.000,41.000,41.500,15.300,93.750
+21,Turkey,Hande Boyaci,26.934,32.959,59.893,Gold Medal,,16.500,13.500,14.500,6.15,26,22.000,23.000,60.000,77.689,44.333
+22,India,Sumit Somani,16.191,43.569,59.759,Gold Medal,,21.000,21.000,12.500,10,34,32.000,45.500,58.000,12.000,67.000
+23,India,Soham Mehta,13.961,45.797,59.757,Gold Medal,,23.500,16.500,16.500,9,51,31.000,56.500,54.500,36.811,27.000
+24,Slovakia,Martin Lukacisin,26.865,32.135,59,Gold Medal,,17.500,20.500,11.500,6.25,25,23.000,25.500,24.500,54.029,71.500
+25,Hungary,Gyula Palfy,19.153,39.712,58.866,Gold Medal,,18.500,19.000,12.500,6.75,17,32.000,70.500,43.500,17.000,76.000
+26,Lithuania,Karolis Leonavicius,25.819,32.58,58.399,Gold Medal,,21.000,13.500,11.500,6.5,27,23.000,3.000,71.500,32.545,91.250
+27,Vietnam,Minh Nguyen Thi Ngoc,11.198,47.043,58.241,Gold Medal,,20.500,19.500,19.500,11,50,30.000,69.500,26.000,11.600,42.500
+28,Lithuania,Aurimas Vysniauskas,23.883,34.212,58.095,Gold Medal,,22.500,19.000,12.500,6.5,42,14.000,6.000,56.500,47.657,64.000
+29,Canada,Hyeonjin Bae,26.64,31.362,58.003,Gold Medal,,18.500,14.500,12.500,2.35,35,23.000,27.000,49.500,52.919,71.667
+30,Poland,Przemyslaw Krzysztof Tredak,19.577,38.006,57.582,Gold Medal,,19.500,22.000,11.500,9.75,23,25.000,9.000,72.500,45.867,44.550
+31,Iran,Ehsan Shabani,28.64,28.783,57.423,Gold Medal,,21.500,8.000,11.500,6,39,26.000,19.500,11.000,50.052,85.000
+32,Chinese Taipei,Kai-Jui Chang,17.192,40.002,57.194,Silver Medal,,18.500,16.000,11.000,8.25,29,31.000,52.500,65.000,46.978,31.333
+33,Thailand,Tanatorn Khotavivattana,16.211,40.858,57.069,Silver Medal,,22.500,15.000,16.500,5.75,28,28.500,51.500,69.500,19.183,58.750
+34,Armenia,Samvel Bardakhchyan,15.005,41.874,56.878,Silver Medal,,23.500,19.500,19.500,5.4,62,12.000,72.500,19.500,58.500,7.000
+35,Slovakia,Erik Andris,28.207,28.495,56.701,Silver Medal,,19.500,4.000,13.500,9.05,38,20.000,26.500,6.000,51.729,80.883
+36,Estonia,Andres Laan,18.755,37.569,56.324,Silver Medal,,21.500,6.500,16.000,7.5,52,21.000,59.000,38.500,42.809,44.000
+37,Belarus,Dzianis Hramazdou,22.505,33.778,56.283,Silver Medal,,20.500,15.500,12.000,10.75,37,22.000,4.000,33.500,37.000,69.500
+38,Chinese Taipei,Frank Meng Lin,18.174,37.6,55.774,Silver Medal,,23.500,16.000,13.500,6.5,51,26.000,40.500,22.000,32.783,52.750
+39,Ukraine,Ostap Chervak,16.959,38.429,55.388,Silver Medal,,23.500,9.000,15.500,8.25,36,35.000,24.500,57.500,12.250,70.550
+40,United States,Brian Kihoon Lee,15.09,40.156,55.246,Silver Medal,,18.500,6.000,10.500,9,53,22.000,68.500,78.500,23.394,48.250
+41,Czech Republic,Ctirad Cervinka,27.686,27.448,55.134,Silver Medal,,20.500,17.000,9.500,4.5,10,16.000,13.000,44.500,74.758,51.500
+42,Australia,Andrew Tulloch,18.304,36.723,55.027,Silver Medal,,22.000,16.000,17.500,6.25,2,26.000,48.000,50.500,37.500,47.917
+43,United States,Justin Koh,25.441,29.48,54.921,Silver Medal,,17.500,3.000,15.500,6.5,11,33.000,20.000,50.500,37.800,83.250
+44,Slovakia,Boris Fackovec,22.485,32.361,54.846,Silver Medal,,23.000,10.000,11.500,5.5,38,26.000,42.500,16.500,41.000,64.750
+45,Vietnam,Ha Phan Tran Hong,12.005,42.435,54.439,Silver Medal,,20.500,21.500,17.500,8.5,35,30.500,64.500,13.000,37.000,17.000
+46,India,Vikas Prajapati,13.814,40.031,53.845,Silver Medal,,22.500,22.000,13.500,10.25,32,33.000,26.000,24.500,7.800,60.000
+47,Hungary,Attila Lovas,26.4,26.948,53.348,Silver Medal,,18.500,0.000,12.500,10.25,35,25.000,8.000,18.500,53.319,70.000
+48,Armenia,Narek Dshkhunyn,4.345,48.776,53.121,Silver Medal,,24.500,22.000,19.500,9.2,67,24.000,72.500,25.500,6.000,14.750
+49,Austria,Alexander Puchhammer,20.593,32.482,53.075,Silver Medal,,16.500,11.000,14.000,6.25,42,30.000,10.000,45.500,38.242,58.500
+50,United Kingdom,Matthew James Cliffe,14.93,38.144,53.074,Silver Medal,,18.500,17.000,14.500,7.3,33,36.000,15.000,61.000,39.000,29.300
+51,Singapore,Zeqi Yang,16.398,36.193,52.591,Silver Medal,,21.500,0.500,12.500,7.75,48,25.000,54.000,63.000,51.664,21.917
+52,Kazakhstan,Yerdos Ordabayev,20.921,31.572,52.493,Silver Medal,,21.500,16.000,19.500,6.65,21,21.000,7.000,18.500,59.000,36.000
+53,United Kingdom,Frederick Robert William Meath Manners,17.898,34.542,52.44,Silver Medal,,24.000,22.000,11.500,7,12,16.000,54.000,15.000,30.552,53.967
+54,New Zealand,Jonathan Lin,26.423,25.257,51.679,Silver Medal,,21.500,3.000,14.500,4.25,10,25.000,23.500,23.000,73.944,46.133
+55,Czech Republic,Petr Hosek,21.159,30.501,51.661,Silver Medal,,21.500,0.000,11.500,7.4,20,25.000,48.500,44.500,23.547,78.417
+56,Thailand,Pornchai Kaewsapsak,14.586,35.859,50.445,Silver Medal,,23.500,12.500,16.500,5.51,60,32.500,5.000,29.500,18.000,52.000
+57,Israel,Assaf Avraham Shapira,19.61,30.628,50.238,Silver Medal,,23.500,21.000,12.000,6.75,36,10.500,0.000,24.500,35.303,57.000
+58,Bulgaria,Zhivko Atanasov Georgiev,26.508,23.691,50.199,Silver Medal,,5.000,6.500,12.500,7.2,27,24.500,3.000,37.500,39.379,86.750
+59,Hungary,Lorinc Sarkany,20.169,29.837,50.005,Silver Medal,,11.000,13.000,18.000,7,35,23.000,3.000,34.000,25.880,70.750
+60,Germany,Stefan Michael Pusch,14.908,35.053,49.961,Silver Medal,,21.500,12.000,12.500,7.75,30,26.000,16.500,65.000,15.800,56.167
+61,Indonesia,Teuku Mahfuzh Aufar Kari,19.428,30.374,49.802,Silver Medal,,19.000,16.000,14.500,5,17,15.500,32.000,33.000,11.731,83.500
+62,Moldova,Vasile Graur,26.64,23.153,49.793,Silver Medal,,17.500,11.000,10.500,7.25,16,11.000,0.000,24.500,34.528,93.050
+63,Lithuania,Bernardas Morkunas,12.547,37.061,49.608,Silver Medal,,21.000,18.000,10.500,6.15,32,23.000,37.000,64.500,28.940,29.083
+64,Korea Republic,Jong Soo Yoon,10.165,39.1,49.265,Silver Medal,,22.500,17.500,16.500,3.75,50,23.000,57.000,32.500,16.148,32.050
+65,United States,Kenneth Brewer,14.651,34.21,48.861,Silver Medal,,19.500,20.000,18.500,5.75,16,27.000,0.000,51.500,9.250,62.500
+66,Indonesia,Muhamad Faiz,12.228,36.543,48.77,Silver Medal,,23.500,15.500,16.500,5.75,21,29.000,16.000,63.500,43.978,10.000
+67,Romania,Ioan Teodor Trotus,12.031,36.713,48.744,Silver Medal,,20.000,20.500,11.500,8.75,40,22.000,5.000,61.000,48.294,4.000
+68,Belarus,Alena Vaskova,17.046,31.173,48.219,Silver Medal,,22.500,13.000,11.000,8.75,28,21.000,17.000,23.000,35.674,43.750
+69,Estonia,Andi Kipper,22.559,25.525,48.084,Silver Medal,,16.500,2.500,14.000,7,5,20.000,48.500,13.000,51.853,52.500
+70,Austria,Stephan Pribitzer,25.128,22.485,47.613,Silver Medal,,12.500,9.000,11.500,4.75,17,22.000,17.500,9.500,82.177,30.083
+71,Australia,Kartik Ramesh,12.765,34.793,47.558,Silver Medal,,20.500,9.500,11.500,8.25,28,26.000,42.500,47.000,31.195,27.550
+72,Romania,Vlad Alexandru Puscasu,16.199,31.328,47.527,Silver Medal,,20.500,13.000,17.500,5.65,41,28.000,14.000,0.000,39.340,35.250
+73,Iran,Kaveh Matinkhoo,15.477,31.912,47.388,Silver Medal,,17.500,20.000,12.500,4.5,40,23.000,9.000,35.500,27.635,45.250
+74,New Zealand,Chuan Zheng Lee,21.221,25.88,47.101,Silver Medal,,21.500,0.500,10.500,5.5,12,26.000,0.000,73.000,22.451,80.000
+75,Brazil,Thais Macedo Bezerra Terceiro Jorge,6.805,40.26,47.064,Silver Medal,,17.500,14.000,14.500,6.5,50,28.000,69.000,40.000,15.500,16.000
+76,Hungary,Balint Balazs,21.647,25.16,46.807,Silver Medal,,18.500,3.000,12.500,1.9,28,25.000,4.000,61.000,35.891,66.500
+77,Slovenia,Jan Kogoj,11.955,34.755,46.71,Silver Medal,,21.500,22.000,12.500,7.15,10,23.000,24.500,43.500,40.800,12.333
+78,Italy,Vincenzo Grande,15.437,31.064,46.501,Silver Medal,,18.500,18.500,13.500,7.65,34,15.000,13.000,20.500,38.000,33.000
+79,Romania,Ionut Gabriel Dumitru,11.135,35.354,46.489,Silver Medal,,23.000,8.000,11.000,4.75,60,19.000,60.500,36.000,27.156,24.100
+80,Vietnam,Linh Bui Le,12.571,33.874,46.445,Silver Medal,,14.500,15.000,11.500,8.5,58,28.000,17.000,22.000,47.820,7.250
+81,Germany,Christian Oberender,14.951,31.469,46.42,Silver Medal,,16.000,12.500,11.500,10.5,18,23.000,9.000,52.500,33.759,35.500
+82,Kyrgyzstan,Kainar Jyldyzbekovich Kamalov,13.044,33.033,46.077,Silver Medal,,19.500,10.500,9.000,7.4,55,14.000,63.000,12.000,32.253,27.717
+83,Slovenia,Jan Bitenc,17.45,28.546,45.996,Silver Medal,,16.500,4.000,15.500,8.25,21,16.000,20.000,51.500,25.802,57.250
+84,Singapore,Benjamin Chen,16.318,29.592,45.909,Silver Medal,,20.500,6.000,11.000,4.6,45,18.000,25.000,49.500,25.045,52.467
+85,Argentina,Matias Daniel Gomez Elias,15.446,30.324,45.771,Silver Medal,,19.500,10.000,13.500,7.85,32,15.000,30.000,25.000,21.340,52.417
+86,Sweden,Oscar Carl Gunnar Granberg,23.49,22.188,45.677,Silver Medal,,19.500,10.500,16.000,0.75,10,20.500,5.000,14.000,35.000,76.750
+87,Thailand,Techin Chuladesa,12.103,33.544,45.647,Silver Medal,,18.500,12.000,12.500,8.25,35,26.500,27.000,33.500,39.000,15.167
+88,Venezuela,Gabriel Eduardo Sanoja Lopez,26.834,18.351,45.185,Bronze Medal,,11.000,9.000,10.500,4.5,10,15.000,14.000,0.000,50.456,75.500
+89,Latvia,Mihails Arhangelskis,7.063,37.904,44.967,Bronze Medal,,20.000,14.000,12.000,7.25,54,30.000,39.500,35.500,23.489,8.000
+90,Denmark,Christian Marboe,21.828,23.029,44.857,Bronze Medal,,20.500,5.750,7.500,6,10,21.000,2.000,40.000,39.896,62.750
+91,United Kingdom,Derek Steven Hung-Che Chan,10.785,34.012,44.797,Bronze Medal,,21.500,20.000,14.500,9,19,25.000,5.000,29.500,21.006,29.500
+92,Japan,Takashi Hiroi,7.035,37.491,44.526,Bronze Medal,,21.500,7.000,12.500,8.5,18,24.000,65.000,69.000,23.544,7.800
+93,Kazakhstan,Ayana Badrakova,16.875,27.297,44.172,Bronze Medal,,17.500,19.500,16.500,6.75,0,18.000,0.000,18.500,21.391,59.500
+94,Ukraine,Volodymyr Tkachenko,13.031,30.852,43.883,Bronze Medal,,18.500,1.000,15.500,8.25,25,19.000,57.500,27.500,11.600,51.667
+95,Brazil,Rafael de Cesaris Araujo Tavares,11.694,32.007,43.701,Bronze Medal,,19.500,14.000,14.000,7.5,12,23.000,41.000,20.500,7.500,49.750
+96,Iran,Shabnam Sharifzadeh,15.455,28.165,43.62,Bronze Medal,,18.500,12.000,11.500,4.75,45,23.000,5.000,23.500,37.000,34.250
+97,Austria,Florian Langmann,11.869,31.661,43.529,Bronze Medal,,18.500,5.500,9.500,4.5,36,25.000,65.400,35.500,19.000,37.250
+98,Netherlands,Raoul Rosenthal,24.573,18.952,43.525,Bronze Medal,,5.000,8.000,13.000,3.5,22,19.000,7.500,13.500,33.426,84.000
+99,Turkey,Ahmet Selim Han,14.401,28.972,43.373,Bronze Medal,,17.000,14.500,12.500,5.75,49,4.000,24.500,29.500,42.000,23.167
+100,Japan,Naru Tanaka,6.453,36.91,43.363,Bronze Medal,,22.500,11.500,17.500,4.25,45,29.000,25.900,55.000,20.870,8.000
+101,Indonesia,Vincentius Jeremy Suhardi,17.791,25.311,43.102,Bronze Medal,,16.000,9.500,12.500,6.25,20,15.000,4.500,41.500,12.934,73.917
+102,Malaysia,Jun Yan Goh,25.19,17.864,43.054,Bronze Medal,,19.500,3.000,12.500,3.4,17,13.000,0.000,4.500,33.926,86.500
+103,Japan,Shotaro Tsunoda,7.017,35.679,42.696,Bronze Medal,,20.500,22.000,18.500,6,17,25.500,14.000,40.000,26.731,4.000
+104,Estonia,Taavi Pungas,14.557,28.097,42.654,Bronze Medal,,19.000,15.000,14.500,2.75,22,25.000,4.000,34.500,16.800,53.250
+105,Armenia,Arshavir Ghahramanyan,0.9,41.616,42.516,Bronze Medal,,24.500,17.000,18.500,3.25,67,10.000,72.500,43.000,0.000,4.500
+106,Ukraine,Kirill Polischuk,8.118,34.367,42.485,Bronze Medal,,20.000,18.500,16.500,9.65,52,0.000,26.000,23.000,21.577,15.500
+107,Argentina,Gonzalo Jose Munar,20.343,22.106,42.449,Bronze Medal,,8.000,11.000,10.500,6,35,17.000,5.500,11.000,9.000,91.250
+108,Singapore,Guang Jun Joseph Lim,11.426,30.918,42.344,Bronze Medal,,20.500,5.000,12.000,6,33,23.000,45.500,32.500,10.000,45.500
+109,Ireland,Andrew Brian Cairns,18.006,24.284,42.29,Bronze Medal,,9.500,16.000,11.500,5.5,20,17.000,10.000,22.000,14.000,73.750
+110,Switzerland,Lucia Domenica Meier,22.642,19.641,42.283,Bronze Medal,,12.500,8.500,10.000,5,7,19.000,0.000,22.500,32.000,76.000
+111,Denmark,Thorbjørn Juul Morsing,24.159,17.954,42.112,Bronze Medal,,15.000,2.000,13.500,4,10,20.000,4.000,4.000,45.832,67.500
+112,Kazakhstan,Dauren Kaliyev,18.433,23.598,42.031,Bronze Medal,,6.000,3.000,6.500,9.9,41,21.000,24.500,18.000,43.285,41.833
+113,Belarus,Tsimafei Balotnik,15.347,26.017,41.364,Bronze Medal,,14.000,9.000,14.500,6.5,35,18.500,5.500,21.500,49.220,19.500
+114,Australia,Zijun (Jim) Ge,7.476,33.874,41.35,Bronze Medal,,14.500,13.500,12.500,8.25,21,26.000,32.500,55.500,9.500,26.333
+115,Kazakhstan,Zhanbolat Zholgeldiyev,14.752,26.473,41.225,Bronze Medal,,15.250,6.000,12.000,4.5,8,22.500,49.500,30.500,61.500,2.250
+116,Turkmenistan,Serdar Rozyyev,17.227,23.638,40.865,Bronze Medal,,17.500,4.750,5.000,8.75,29,15.000,23.500,16.000,8.500,76.250
+117,Pakistan,Shaina  Khan ,20.955,19.891,40.847,Bronze Medal,,7.000,9.000,5.500,5.75,15,11.000,15.000,45.500,37.648,61.000
+118,Czech Republic,Petr Jurik,15.377,25.109,40.486,Bronze Medal,,18.000,7.000,15.000,8.4,2,19.000,4.500,28.500,56.661,11.000
+119,Ukraine,Olha Balabon,6.926,33.471,40.398,Bronze Medal,,21.500,16.000,12.500,5.4,50,21.000,9.000,43.500,23.333,7.500
+120,Canada,Dan Peng,14.376,25.672,40.048,Bronze Medal,,18.000,12.500,16.000,2.46,17,19.000,4.500,34.500,45.048,19.500
+121,Indonesia,William,8.977,30.489,39.466,Bronze Medal,,17.000,18.000,16.500,7.35,13,21.000,19.000,14.500,29.785,10.250
+122,Latvia,Romāns Čaplinskis,12.821,26.535,39.356,Bronze Medal,,5.000,0.500,15.500,8.5,36,30.000,16.000,35.500,34.275,24.250
+123,Belarus,Liudmila Kushnir,4.124,34.946,39.071,Bronze Medal,,23.500,14.000,13.500,6.25,12,28.000,24.500,62.500,11.500,7.250
+124,France,Elise Duboue-Dijon,13.223,25.577,38.8,Bronze Medal,,19.500,8.000,17.500,8,20,8.000,10.500,13.000,19.835,43.050
+125,Turkmenistan,Batyr Garlyyev,11.647,27.108,38.755,Bronze Medal,,16.500,3.000,14.500,6.05,25,25.000,25.500,28.000,42.343,9.000
+126,Singapore,Chin Heng Gan,10.653,28.078,38.731,Bronze Medal,,20.500,5.000,9.500,1.5,38,22.000,36.500,51.000,9.000,42.800
+127,Norway,Henrik Soensteby,19.194,19.266,38.46,Bronze Medal,,20.500,6.500,8.000,4.3,12,18.000,3.000,6.000,33.300,57.250
+128,India,Immanuel Ilavarasan Thomas,7.641,30.614,38.255,Bronze Medal,,22.500,20.500,17.500,2,19,23.000,5.000,28.500,25.333,8.750
+129,Venezuela,Daniel Enrique Cardenas Armas,17.315,20.688,38.003,Bronze Medal,,16.000,9.000,19.500,2.2,13,5.000,0.000,26.000,45.000,34.250
+130,Italy,Simone Calvello,11.9,25.906,37.806,Bronze Medal,,12.500,10.000,12.500,5,27,28.000,10.000,23.500,19.997,36.250
+131,New Zealand,Thomas Ashton Christopher Wong,15.165,22.59,37.755,Bronze Medal,,19.000,2.500,10.500,3.5,27,25.000,4.000,28.500,11.200,62.800
+132,Estonia,Ivan Ogibalov,20.033,17.698,37.731,Bronze Medal,,15.500,3.000,12.000,1.75,7,20.000,15.000,8.500,50.450,41.500
+133,Tajikistan,Khursand Yorov,6.462,31.25,37.712,Bronze Medal,,15.000,19.000,15.000,10.5,22,25.500,0.000,11.000,6.000,25.333
+134,Romania,Ingrid Cristiana Vreja,8.593,29.015,37.608,Bronze Medal,,22.000,8.500,16.000,3.25,35,26.000,8.000,30.500,9.000,32.500
+135,Bulgaria,Ivanka Rosenova Zhivkova,12.109,25.325,37.435,Bronze Medal,,17.000,5.500,17.000,4.25,25,20.500,21.000,13.000,9.500,49.500
+136,Finland,Taneli Toivo Hermanni Rajala,15.913,21.495,37.408,Bronze Medal,,19.500,5.000,11.000,4.9,24,14.000,4.000,18.500,26.000,49.333
+137,Malaysia,Muhamad Azri Muhamad Marican,16.076,21.185,37.261,Bronze Medal,,18.000,11.500,5.500,4.75,10,18.000,6.500,21.000,31.500,43.750
+138,Malaysia,Gah Hung Lee,13.741,23.358,37.098,Bronze Medal,,19.500,2.000,12.500,4.65,25,24.000,1.500,28.500,12.000,54.750
+139,Brazil,Jorio Almino de Alencar Arrais Mota,10.298,26.788,37.086,Bronze Medal,,19.500,3.000,14.500,6.5,19,32.000,8.000,23.500,33.100,13.000
+140,New Zealand,Michael James Plunkett,9.372,27.179,36.551,Bronze Medal,,19.000,16.000,11.500,6.85,20,16.000,4.000,23.500,36.000,5.000
+141,Slovakia,Lubica Krauskova,15.294,21.194,36.488,Bronze Medal,,17.500,6.500,12.500,5.15,10,18.000,0.000,19.500,15.310,58.667
+142,Australia,Nicholas Moulaf,5.543,30.779,36.322,Bronze Medal,,19.000,11.500,14.500,3.45,21,28.000,17.500,54.000,9.000,17.250
+143,United Kingdom,Jaroslav Zak,8.125,28.067,36.191,Bronze Medal,,20.000,20.250,11.500,2,29,31.000,3.000,6.000,26.982,9.250
+144,Spain,Victor Lopez Ferrando,16.276,19.873,36.149,Bronze Medal,,19.500,9.000,6.000,8.5,5,11.000,5.000,4.000,46.080,27.800
+145,Austria,Hubert Kalaus,13.146,22.585,35.731,Bronze Medal,,11.500,1.000,11.500,3,17,8.000,69.500,29.500,29.009,32.000
+146,Turkey,Dogukan Dikmen,4.73,30.941,35.672,Bronze Medal,,18.000,8.500,14.500,6.9,25,24.000,38.500,24.500,4.000,19.000
+147,Slovenia,Irena Matkovič,6.191,29.43,35.621,Bronze Medal,,21.000,18.000,12.500,9.25,10,15.000,1.500,29.500,12.000,17.000
+148,Japan,Kazuki Yamaguchi,12.328,23.116,35.444,Bronze Medal,,23.000,6.000,10.500,2.4,25,19.000,3.000,31.500,42.046,12.750
+149,Pakistan,Anita  Pabani,15.947,18.986,34.933,Bronze Medal,,14.000,2.500,9.500,7.5,15,14.000,10.500,7.500,38.429,35.050
+150,Cuba,Manuel Garcia Ricardo,10.006,24.846,34.852,Bronze Medal,,7.000,9.000,12.500,10.4,37,25.000,0.000,0.000,13.500,34.333
+151,Switzerland,Max Hafliger,5.936,28.64,34.575,Bronze Medal,,21.500,7.000,13.000,3.1,15,18.000,49.000,39.500,25.523,0.000
+152,United States,Sofia Izmailov,12.278,22.193,34.471,Bronze Medal,,15.000,4.750,13.500,4.15,15,19.000,9.000,31.500,39.250,15.750
+153,Netherlands,Mathijs de Jong,17.322,17.121,34.443,Bronze Medal,,7.500,5.000,10.000,6.5,15,20.000,0.000,1.500,18.800,64.750
+154,Argentina,Luciano Hector Di Stefano,12.951,21.413,34.364,Bronze Medal,,17.500,2.000,11.500,5.5,17,27.000,7.000,6.000,38.490,20.000
+155,Israel,Itamar Avraham David Shamai,8.463,25.672,34.135,Bronze Medal,,18.000,18.000,16.500,6.4,10,13.000,0.000,6.000,9.300,31.500
+156,Italy,Cristiana Fanciullo,15.728,17.914,33.643,Bronze Medal,,22.500,0.000,9.500,6,0,15.000,7.000,8.000,48.137,22.667
+157,Turkmenistan,Muradov Nurmuhammet,7.7,25.691,33.391,Bronze Medal,,15.000,10.000,15.500,4.75,5,25.000,18.500,24.000,0.000,38.500
+158,Argentina,Pablo Gustavo Levrand,11.167,22.168,33.335,Bronze Medal,,13.500,17.000,9.500,8,0,5.000,0.000,31.500,26.517,25.000
+159,Mexico,Sergio Fonseca Chitica,12.978,20.035,33.013,Honorable Mention,,12.500,3.000,11.000,7.5,21,19.500,4.000,5.000,7.000,56.750
+160,Lithuania,Roberta Poceviciute,8.43,24.572,33.002,Honorable Mention,,18.000,13.500,12.500,5.25,27,21.000,0.000,0.000,23.349,15.000
+161,France,Quentin Lefebvre,4.698,28.219,32.917,Honorable Mention,,19.500,11.000,18.500,5.7,12,24.000,13.500,14.500,20.204,0.000
+162,Switzerland,Andreas Frutiger,17.922,14.839,32.761,Honorable Mention,,16.500,0.000,6.500,5,10,10.000,3.000,16.500,34.064,50.000
+163,Vietnam,Manh Le Dinh,4.047,28.585,32.632,Honorable Mention,,20.500,12.750,14.500,8.26,40,7.000,22.000,0.000,13.100,5.000
+164,Iran,Amirhady Kamkaramoli,9.323,23.252,32.575,Honorable Mention,,19.000,8.500,9.500,5.75,0,17.000,9.000,41.500,13.000,31.500
+165,Norway,Geir Haakon Beckstroem,11.213,21.347,32.56,Honorable Mention,,16.500,6.000,12.500,5.75,13,12.000,18.500,9.500,34.455,16.000
+166,Mongolia,Javzansuren Norvanchig,19.94,12.369,32.309,Honorable Mention,,13.500,9.000,1.500,4,5,6.000,0.000,6.000,56.000,34.583
+167,Tajikistan,Umed Boltaev,6.581,25.623,32.204,Honorable Mention,,11.500,6.500,9.500,7.75,20,19.000,47.500,13.000,24.000,5.000
+168,Kyrgyzstan,Sabyrbek Bolotbekovich Zheentaev,11.125,21.073,32.198,Honorable Mention,,7.500,5.000,16.000,6.4,31,13.000,1.500,18.500,13.867,39.500
+169,Mexico,Jose Enrique Robles Soto,9.053,23.109,32.162,Participation Certificate,,16.500,3.000,11.000,6,12,30.000,19.000,8.000,35.059,4.500
+170,Italy,Vincenzo Spalluto,19.643,12.481,32.124,Participation Certificate,,4.000,3.000,6.500,4.75,16,5.000,22.500,0.000,30.500,62.750
+171,Croatia,Juraj Ahel,10.906,21.088,31.994,Participation Certificate,,19.500,6.750,7.500,1.75,12,21.000,4.000,43.500,14.000,38.250
+172,Israel,Dan Liraz Lidji,10.623,21.332,31.955,Participation Certificate,,13.500,6.000,17.500,0.75,25,18.000,20.500,6.000,35.000,12.417
+173,Netherlands,Christiaan Alwin  Douma ,11.891,19.908,31.8,Participation Certificate,,18.000,2.000,9.000,6.7,15,13.000,10.500,17.500,36.800,16.667
+174,Spain,Alberto Garcia Bosque,10.887,20.903,31.79,Participation Certificate,,18.500,5.000,4.000,6,10,29.000,3.000,20.500,12.200,40.250
+175,Peru,Luis Alberto Ypanaque Rocha,13.484,18.05,31.533,Participation Certificate,,15.500,1.500,1.000,3.5,0,16.000,65.500,8.000,57.979,0.000
+176,Iceland,Andri Vilberg Orrason,7.558,23.597,31.155,Participation Certificate,,22.000,11.000,13.500,6.15,0,14.000,8.000,12.500,11.000,25.000
+177,Netherlands,Jia Chen,13.756,17.073,30.83,Participation Certificate,,14.000,0.500,7.500,3.3,17,13.000,5.000,40.500,30.845,32.917
+178,Croatia,Ivana Brekalo,6.885,23.812,30.698,Participation Certificate,,21.500,4.000,12.500,5.25,28,20.000,3.000,17.500,10.257,22.500
+179,France,Benjamin Bousquet,10.071,20.369,30.44,Participation Certificate,,13.500,5.000,13.500,2.66,20,19.000,10.000,18.000,37.500,6.750
+180,Sweden,Daria Ewa Struska,13.226,17.06,30.285,Participation Certificate,,13.500,2.000,12.000,0.75,10,16.000,13.000,27.500,10.000,54.500
+181,Israel,Haleluya  Sagit,14.383,15.827,30.209,Participation Certificate,,13.500,3.000,11.000,4,9,13.000,0.000,12.000,49.160,14.750
+182,Cyprus,Michalis Rossides,14.549,15.565,30.114,Participation Certificate,,11.500,7.500,12.500,2.91,10,10.000,3.000,0.000,51.339,13.050
+183,Ireland,Martina Feyzrakhmanova,6.592,23.499,30.091,Participation Certificate,,16.500,13.500,13.500,4.9,14,15.000,12.750,4.000,14.800,15.750
+184,Greece,Sotirios Christodoulou,15.933,14.089,30.021,Participation Certificate,,15.500,9.000,9.500,0,2,6.000,0.000,19.500,1.000,78.500
+185,Turkey,Mehmet Vural,4.77,24.801,29.571,Participation Certificate,,19.500,6.000,5.500,4,35,21.000,30.000,23.000,8.000,14.550
+186,Malaysia,Aminatulmunirah Kasim,14.217,14.921,29.138,Participation Certificate,,10.000,2.500,7.500,3.75,10,13.000,4.000,26.000,33.611,32.000
+187,Peru,Cristhian Luis Canari Chumpitaz,10.133,18.935,29.069,Participation Certificate,,6.000,1.000,17.500,5.9,16,19.000,9.000,8.000,0.000,50.667
+188,Slovenia,Miha Emerik Habic,9.107,19.95,29.057,Participation Certificate,,19.500,5.000,8.500,3.75,10,16.000,7.000,28.000,12.500,31.000
+189,Croatia,Ivan Prepolec,10.678,18.349,29.027,Participation Certificate,,14.500,3.000,12.000,9.75,20,3.000,0.000,0.000,29.646,18.917
+190,Spain,Andres Suarez Velazquez,9.964,18.946,28.91,Participation Certificate,,13.500,7.500,7.000,4.1,7,28.000,2.500,11.500,36.826,7.000
+191,Kyrgyzstan,Zamirbek Usonovich Akimbekov,6.85,21.749,28.599,Participation Certificate,,12.000,3.000,9.500,6.4,37,15.000,8.000,28.000,0.000,34.250
+192,Canada,Shervin Ghafouri-Tabrizi,5.318,22.533,27.852,Participation Certificate,,23.500,6.000,16.500,5,10,9.000,11.000,8.000,18.095,5.550
+193,Moldova,Veaceslav Vieru,10.24,17.595,27.835,Participation Certificate,,12.000,1.000,5.000,7.75,18,21.000,5.000,9.000,35.000,10.500
+194,Sweden,Stella Lucie Riad,9.659,17.868,27.527,Participation Certificate,,8.500,9.500,6.000,4.65,10,22.000,7.000,11.500,13.800,32.250
+195,Mongolia,Urandelger Tuvshindorj,15.717,11.531,27.248,Participation Certificate,,8.000,7.500,7.000,1.2,10,8.000,7.000,0.000,0.000,78.583
+196,Finland,Janne Valo Verner Henriksson,14.805,11.925,26.729,Participation Certificate,,13.500,1.000,4.500,4.75,10,7.000,7.000,0.000,37.000,31.000
+197,Cyprus,Konstantinos Hadjipetrou,9.872,16.678,26.55,Participation Certificate,,15.500,10.000,8.000,5,13,3.000,0.000,8.000,36.000,7.500
+198,Ireland,Patrick Michael O'Sullivan,7.094,18.803,25.897,Participation Certificate,,17.000,9.000,12.500,4.25,12,9.000,3.000,3.000,8.000,26.167
+199,Iceland,Hordur Freyr Yngvason,9.179,16.564,25.743,Participation Certificate,,14.500,0.000,17.500,3.15,7,10.000,3.000,14.500,39.470,0.000
+200,Latvia,Pāvels Zubovičs,7.373,17.985,25.358,Participation Certificate,,18.500,9.500,16.500,3.85,5,1.000,0.000,2.000,13.000,21.750
+201,Belgium,Quentin Hisette,15.442,9.809,25.251,Participation Certificate,,14.500,2.000,1.000,2.5,7,7.000,1.500,9.500,24.262,49.000
+202,Czech Republic,Petr Stadlbauer,11.43,13.603,25.033,Participation Certificate,,5.000,0.000,6.500,4,29,15.000,8.000,8.500,16.900,37.500
+203,Iceland,Karl Njalsson,7.899,17.13,25.029,Participation Certificate,,14.000,0.000,12.000,5.35,7,12.000,8.000,19.000,27.086,8.000
+204,Croatia,Ivan Barun,5.171,19.81,24.98,Participation Certificate,,21.500,13.000,10.000,6.5,0,0.000,11.500,0.000,18.537,4.300
+205,Sweden,Axel Nils Ola Gottfries,10.125,14.801,24.927,Participation Certificate,,17.500,2.500,7.000,4.75,5,9.000,0.000,13.500,25.264,21.250
+206,Canada,John Christopher Janetzko,4.758,20.104,24.862,Participation Certificate,,16.500,0.500,12.500,0.5,27,13.000,29.500,26.000,15.300,6.000
+207,Norway,Johan Yuan Wang,2.883,21.874,24.756,Participation Certificate,,18.500,14.000,10.000,4,12,14.000,3.500,13.500,1.000,13.250
+208,Denmark,Tina Kanstrup,8.823,15.645,24.468,Participation Certificate,,15.000,3.200,5.500,2.5,20,6.000,10.500,28.500,13.000,29.000
+209,Brazil,Jose Ernando Sousa Filho,2.863,21.546,24.409,Participation Certificate,,16.000,7.000,11.000,5.9,17,22.000,0.000,10.000,5.000,8.500
+210,Mexico,Juan Ivan Gomez-Peralta,9.277,14.958,24.234,Participation Certificate,,6.000,2.000,13.500,5,19,9.000,3.500,6.000,8.500,36.500
+211,Greece,Panagiotis Palantas,5.106,18.826,23.932,Participation Certificate,,18.500,5.500,5.500,0.5,55,6.000,0.000,31.000,5.000,19.717
+212,Cyprus,Grigoris Katsiolidis,12.632,10.737,23.369,Participation Certificate,,15.000,4.000,4.000,0.75,10,11.000,0.000,0.000,47.582,7.833
+213,Cyprus,Charis Antonis Antoniou,8.125,15.176,23.301,Participation Certificate,,14.500,2.250,6.500,3.95,22,16.000,0.000,1.500,11.000,27.833
+214,Greece,Ioannis Botis,7.95,15.092,23.042,Participation Certificate,,19.000,1.000,16.500,0,2,9.000,0.000,17.500,0.000,39.750
+215,Ireland,Grellan Jerome Kevin Tuohy,10.116,12.747,22.863,Participation Certificate,,13.500,0.500,7.500,1.15,10,9.000,7.000,22.000,14.000,34.300
+216,Belgium,Vanessa LOODTS,6.211,16.556,22.767,Participation Certificate,,18.500,8.000,1.500,0.85,12,20.000,5.500,20.500,26.706,0.000
+217,Switzerland,Frederic Cottier,7.529,14.979,22.508,Participation Certificate,,17.500,2.000,8.000,2.75,15,13.000,1.500,6.000,6.000,30.667
+218,Moldova,Alexandru Cartaleanu,5.053,17.351,22.403,Participation Certificate,,11.500,0.000,7.000,5.5,28,16.000,3.000,22.500,10.833,12.667
+219,Spain,Alberto Sanchez Molero,9.554,12.339,21.893,Participation Certificate,,4.000,5.000,2.000,7.5,10,10.000,0.000,11.500,33.198,9.167
+220,Pakistan,Shahzad  Iqbal,4.009,17.06,21.069,Participation Certificate,,16.000,3.000,7.000,5.2,10,15.000,4.000,15.500,13.798,4.000
+221,Peru,Joseph Hernan Pena Echevarria,4.056,16.917,20.973,Participation Certificate,,18.500,0.000,14.000,6.4,12,2.000,9.000,0.000,14.000,4.000
+222,Mongolia,Battulga Byambasuren,7.648,13.25,20.898,Participation Certificate,,7.000,5.000,4.500,5.75,12,12.000,4.000,3.000,3.000,34.750
+223,Moldova,Leonid Bibin,4.891,15.658,20.549,Participation Certificate,,21.000,0.000,10.000,4.65,12,10.000,0.000,0.000,21.031,0.000
+224,Belgium,David Van Cauwenberge,6.442,14.073,20.515,Participation Certificate,,11.500,3.000,4.000,3.3,12,18.000,8.000,8.500,14.800,15.000
+225,Tajikistan,Saidullo Sulaymonzoda,0.2,20.001,20.201,Participation Certificate,,14.000,7.750,12.500,3.7,12,23.000,7.500,0.000,0.000,1.000
+226,Pakistan,Hamza Khan  Shahbazi    ,3.236,16.374,19.61,Participation Certificate,,19.000,3.000,7.500,1.75,10,17.000,3.000,18.000,5.100,10.250
+227,Iceland,Vesteinn Snaebjarnarson,8.01,11.492,19.502,Participation Certificate,,6.000,3.000,8.000,4,5,9.000,0.000,12.500,0.000,40.050
+228,Portugal,Raul Joao de Sousa Pereira,1.7,17.775,19.475,Participation Certificate,,15.500,5.000,9.500,5.65,12,13.000,0.000,10.000,0.000,8.500
+229,Latvia,Jānis Jermaks,5.723,12.879,18.602,Participation Certificate,,7.000,1.000,6.500,5.85,16,15.000,0.000,0.000,13.000,13.500
+230,Mexico,Carlos Leonel Ahumada Manuel,4.001,14.163,18.164,Participation Certificate,,9.000,4.500,1.000,2,19,20.000,5.500,24.500,11.400,6.750
+231,Tajikistan,Khusrav Olimi,7.695,9.478,17.174,Participation Certificate,,4.500,1.000,2.000,3.4,12,14.000,10.500,0.000,6.000,31.500
+232,Denmark,Christoffer Norn,6.83,9.317,16.147,Participation Certificate,,5.500,2.000,2.000,4.51,19,8.000,0.000,0.000,29.371,0.000
+233,Norway,Camilla Espedal,6.282,8.98,15.262,Participation Certificate,,16.500,0.500,1.500,0.75,5,10.000,0.000,8.000,23.572,4.000
+234,Bulgaria,Stefan Dimitrov Kadiysky,3.777,11.429,15.206,Participation Certificate,,7.000,1.000,9.500,3,25,0.000,9.500,3.000,12.800,4.000
+235,Finland,Linus Benjamin Törnqvist,5.883,8.921,14.803,Participation Certificate,,11.500,0.500,0.000,0.75,10,21.000,0.000,0.000,13.257,14.000
+236,Belgium,Jorn Walscharts,6.2,8.248,14.448,Participation Certificate,,11.000,0.250,0.000,3.4,0,15.000,0.000,0.000,0.000,31.000
+237,Finland,Mari Liisa Teinilä,6.281,8.021,14.302,Participation Certificate,,3.000,2.000,4.000,3,10,11.000,0.000,0.000,23.139,4.500
+238,Bulgaria,Gergana Sasheva Valcheva,0.93,13.367,14.297,Participation Certificate,,18.500,5.000,2.000,3.85,10,11.000,0.000,0.000,4.000,0.000
+239,Portugal,Rui Emanuel Ferreira da Silva,3.864,9.715,13.579,Participation Certificate,,11.500,3.000,3.500,3.5,10,0.000,0.000,10.000,3.500,15.250
+240,Uruguay,Joaquin Grassi,3.691,9.487,13.178,Participation Certificate,,7.500,5.000,1.500,0.5,12,14.500,7.000,0.000,12.000,4.500
+241,Portugal,Rui Filipe Goncalves Apostolo,4.77,7.717,12.487,Participation Certificate,,2.000,3.000,2.500,4.15,7,6.000,4.000,3.000,17.931,3.000
+242,Azerbaijan,Memmed Mirzeyev,12.458,0,12.458,Participation Certificate,,0.000,0.000,0.000,0,0,0.000,0.000,0.000,11.000,49.500
+243,Greece,Argyroula Lavi,7.598,4.483,12.08,Participation Certificate,,3.000,3.000,1.000,1.36,0,0.000,0.000,15.500,3.000,34.500
+244,Azerbaijan,Nicat Musayev,9.665,0,9.665,Participation Certificate,,0.000,0.000,0.000,0,0,0.000,0.000,0.000,2.000,46.000
+245,Uruguay,Sebastian Barcardal,2.326,7.189,9.515,Participation Certificate,,8.500,2.000,0.000,1.1,10,8.000,3.000,6.000,10.000,0.000
+246,Portugal,Rui Filipe Lebres Lopes,1.45,7.862,9.312,Participation Certificate,,10.500,6.000,3.000,0.5,0,5.000,0.000,4.000,0.000,7.250
+247,Mongolia,Uyanga Dagvadorj,2.093,6.712,8.805,Participation Certificate,,6.500,2.000,1.000,3.25,10,2.000,3.000,0.000,9.000,0.000
+248,Saudi Arabia,Osamah Altaib Safwan,0.45,7.233,7.683,Participation Certificate,,6.000,2.000,3.500,0.02,15,6.500,4.000,4.500,0.000,2.250
+249,Uruguay,Diego Otero,3.388,4.266,7.655,Participation Certificate,,1.000,1.000,2.000,2,2,7.500,0.000,0.000,10.700,4.500
+250,Uruguay,Sebastian Fiamene,2.326,4.011,6.336,Participation Certificate,,1.000,2.000,0.000,1.75,10,3.000,3.000,0.000,10.000,0.000
+251,Saudi Arabia,Mohammed Abdullah Algasim,1.96,4.323,6.283,Participation Certificate,,7.000,0.000,1.000,0.25,5,6.000,0.000,2.000,0.000,9.800
+252,Saudi Arabia,Ibrahim Abdullah Ba Jaafr,1.928,3.844,5.772,Participation Certificate,,1.000,2.000,1.000,0.01,10,4.000,4.000,3.500,7.000,1.500
+253,Saudi Arabia,Ataallah Naif Alharbi,1.15,4.59,5.74,Participation Certificate,,4.000,0.000,1.000,0.01,10,9.000,0.000,4.500,0.000,5.750
+254,Azerbaijan,Abdulla Ahmadov,5.365,0,5.365,Participation Certificate,,0.000,0.000,0.000,0,0,0.000,0.000,0.000,2.000,24.500
+255,Turkmenistan,Sohbet Hojamuhammedov,0,4.352,4.352,Participation Certificate,,4.000,3.000,0.000,1,11,2.000,0.000,0.000,0.000,0.000
+256,Azerbaijan,Orxan Rzayev,0.233,0,0.233,Participation Certificate,,0.000,0.000,0.000,0,0,0.000,0.000,0.000,1.000,0.000
