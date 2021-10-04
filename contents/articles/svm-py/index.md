@@ -1,5 +1,5 @@
 ---
-template: article.jade
+template: article.pug
 date: 26 Nov 2013
 title: A basic soft-margin kernel SVM implementation in Python
 ---
@@ -22,7 +22,7 @@ presentations.
 Mathematical Formulation
 ------------------------
 
-We consider our training set to be 
+We consider our training set to be
 
 \begin{equation}
 D = \{ (\mathbf{x}\_{i}, y\_{i}), \mathbf{x} \in \mathbb{R}^d, y \in \\{ -1, 1 \\}
@@ -38,7 +38,7 @@ Let $\kappa$ be a kernel function on $\mathbb{R}^d \times
 \kappa(x\_i, x\_j)$ is positive semidefinite.  A key property of such
 kernel functions is that there exists a map $\nu$ such that $\langle
 \nu(x), \nu(y) \rangle = \kappa(x, y)$.  One can think of $\nu$ as
-mapping our input features into a higher dimensional output space.  
+mapping our input features into a higher dimensional output space.
 
 We can show that for a given feature mapping $\nu$ satisfying the
 previous condition, the Lagrangian for the problem of finding the
@@ -120,4 +120,3 @@ See the [`svmpy`][svmpy] library on GitHub for all code used in this post.
 [matplotlib]: http://matplotlib.org/
 [cvxopt]: http://cvxopt.org/
 [Support Vector Machines]: http://en.wikipedia.org/wiki/Support_vector_machine
-

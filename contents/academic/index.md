@@ -1,6 +1,6 @@
 ---
 title: Academic
-template: article.jade
+template: article.pug
 ---
 
 I'm a member of the [Facebook AI Research Group][] (FAIR),  working on

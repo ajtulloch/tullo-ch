@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 title: The LASSO Estimator
-template: article.jade
+template: article.pug
 date: Sat May 31 2014
 
 -------------------------------------------------------------------------------
@@ -65,6 +65,3 @@ is recognizing that we can bound the event $\max_{j} \frac{2}{n} \\|
 than $e^-\frac{t^2}{2}$. Once we have this result, we can apply the
 triangle inequality and the restricted isometry condition in the
 theorem to obtain the desired result.
-
-
-

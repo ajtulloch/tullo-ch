@@ -1,7 +1,7 @@
 extends layout
 
 block prepend title
-  | #{ page.title } &mdash; 
+  | #{ page.title } &mdash;
 
 block content
   include mixins
@@ -9,12 +9,10 @@ block content
     h1.title
       a(href=page.url)= page.title
     div.post-meta
-      mixin date(page.date)
+      +date(page.date)
     div.the-content
       section.content!= page.html
     div.meta.clearfix
-      mixin tags(page.metadata.tags)      
+      +tags(page.metadata.tags)
     div.comments
-      mixin disqus(locals.disqus_name)
-  
-  
+      +disqus(locals.disqus_name)

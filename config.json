@@ -14,8 +14,8 @@
     "google_analytics": "UA-44466528-2"
   },
   "plugins": [
-    "./node_modules/wintersmith-stylus/",
-    "./node_modules/wintersmith-less/"
+    "wintersmith-stylus",
+    "wintersmith-less"
   ],
   "require": {
     "_": "underscore"

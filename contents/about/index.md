@@ -1,6 +1,6 @@
 ---
 title: About
-template: article.jade
+template: article.pug
 ---
 
 You can get in touch with me at <mailto:andrew@tullo.ch>.

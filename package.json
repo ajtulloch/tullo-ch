@@ -5,10 +5,10 @@
     "main": "scan.js",
     "dependencies": {
         "glob": "~3.1.21",
-        "wintersmith-stylus": "~0.4.0",
         "underscore": "~1.4.4",
-        "wintersmith-xmlb": "~0.0.2",
-        "wintersmith-less": "~0.2.1"
+        "wintersmith-less": "^0.2.3",
+        "wintersmith-stylus": "^0.4.1",
+        "wintersmith-xmlb": "~0.0.2"
     },
     "devDependencies": {},
     "scripts": {

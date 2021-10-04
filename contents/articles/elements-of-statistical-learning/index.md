@@ -1,7 +1,7 @@
 ---
 title: Elements of Statistical Learning - Chapter 2 Solutions
 date: 1 Nov 2012
-template: article.jade
+template: article.pug
 ---
 
 The Stanford textbook [Elements of Statistical Learning][esl] by
@@ -38,7 +38,7 @@ utility - check it out on
 The assertion is equivalent to showing that
 \begin{equation}
 \text{argmax}\_i \hat y\_i = \text{argmin}\_k \\\| t\_k - \hat y \\\|
-= \text{argmin}\_k \\\|\hat y - t\_k \\\|^2 
+= \text{argmin}\_k \\\|\hat y - t\_k \\\|^2
 \end{equation}
 by monotonicity of $x \mapsto x^2$ and symmetry of the norm.
 
@@ -57,7 +57,7 @@ Thus we must have
 
 \begin{equation}
   \label{eq:6}
-  \text{argmin}\_k \\\| t\_k - \hat y \\\| = \text{argmax}\_i \hat y\_i 
+  \text{argmin}\_k \\\| t\_k - \hat y \\\| = \text{argmax}\_i \hat y\_i
 \end{equation}
 
 as required.
@@ -73,7 +73,7 @@ as required.
 The Bayes classifier is
 \begin{equation}
   \label{eq:2}
-  \hat G(X) = \text{argmax}\_{g \in \mathcal G} P(g | X = x ).   
+  \hat G(X) = \text{argmax}\_{g \in \mathcal G} P(g | X = x ).
 \end{equation}
 
 In our two-class example $\textbf{orange}$ and $\textbf{blue}$, the
@@ -89,7 +89,7 @@ By the Bayes rule, this is equivalent to the set of points where
 \begin{equation}
   \label{eq:4}
   P(X = x | g = \textbf{blue}) P(g = \textbf{blue}) = P(X = x | g =
-  \textbf{orange}) P(g = \textbf{orange}) 
+  \textbf{orange}) P(g = \textbf{orange})
 \end{equation}
 
 As we know $P(g)$ and $P(X=x|g)$, the decision boundary can be
@@ -104,7 +104,7 @@ calculated.
 
 TODO
 
-    
+
 #### Exercise 2.4
 
 > Consider $N$ data points uniformly distributed in a $p$-dimensional
@@ -112,7 +112,7 @@ TODO
   the origin to the closest data point is given by
   \begin{equation}
     \label{eq:7}
-    d(p, N) = \left(1-\left(\frac{1}{2}\right)^{1/N}\right)^{1/p} 
+    d(p, N) = \left(1-\left(\frac{1}{2}\right)^{1/N}\right)^{1/p}
   \end{equation}
 
 
@@ -127,7 +127,7 @@ point. Then
 by definition of the median.
 
 Since the points $x\_i$ are independently distributed, this implies
-that 
+that
 \begin{equation}
   \label{eq:9}
    \frac{1}{2} = \prod\_{i=1}^N P(\\\|x\_i\\\| > r)
@@ -142,9 +142,9 @@ we have that
 Putting these together, we obtain that
 \begin{equation}
   \label{eq:10}
-  \frac{1}{2} = \left(1-r^p \right)^{N}  
+  \frac{1}{2} = \left(1-r^p \right)^{N}
 \end{equation}
-and solving for $r$, we have 
+and solving for $r$, we have
 \begin{equation}
   \label{eq:11}
   r = \left(1-\left(\frac{1}{2}\right)^{1/N}\right)^{1/p}
@@ -158,13 +158,13 @@ and solving for $r$, we have
 > mean $p$. Consider a prediction point $x\_0$ drawn from this
 > distribution, and let $a = \frac{x\_0}{\\\| x\_0\\\|}$ be an
 > associated unit vector. Let $z\_i = a^T x\_i$ be the projection of
-> each of the training points on this direction. 
+> each of the training points on this direction.
 >
 > Show that the $z\_i$
 > are distributed $N(0,1)$ with expected squared distance from the
 > origin 1, while the target point has expected squared distance $p$
 > from the origin.
-> 
+>
 > Hence for $p = 10$, a randomly drawn test point is
 > about 3.1 standard deviations from the origin, while all the
 > training points are on average one standard deviation along
@@ -260,25 +260,25 @@ generalised.
 > \end{equation}
 > where the weights $\ell\_i(x\_0; X)$ do not depend on the $y\_i$,
 > but do depend on the training sequence $x\_i$ denoted by $\mathcal
-> X$. 
+> X$.
 > 1. Show that the linear regression and $k$-nearest-neighbour
 > regression are members of this class of estimators. Describe
 > explicitly the weights $\ell\_i(x\_0; \mathcal X)$ in each of these
-> cases. 
+> cases.
 > 1. Decompose the conditional mean-squared error
 > \begin{equation}
 >   \label{eq:17}
->   E\_{\mathcal Y | \mathcal X} \left( f(x\_0) - \hat f(x\_0) \right)^2 
+>   E\_{\mathcal Y | \mathcal X} \left( f(x\_0) - \hat f(x\_0) \right)^2
 > \end{equation}
 > into a conditional squared bias and a conditional variance
 > component. $\mathcal Y$ represents the entire training sequence of
-> $y\_i$. 
+> $y\_i$.
 > 1. Decompose the (unconditional) MSE
 > \begin{equation}
 >   \label{eq:18}
 >   E\_{\mathcal Y, \mathcal X}\left(f(x\_0) - \hat f(x\_0) \right)^2
 > \end{equation}
-> into a squared bias and a variance component. 
+> into a squared bias and a variance component.
 > 1. Establish a relationship between the square biases and variances in
 > the above two cases.
 

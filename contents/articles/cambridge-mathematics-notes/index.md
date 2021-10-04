@@ -1,6 +1,6 @@
 ---
 title: Cambridge Part III Mathematics Notes
-template: article.jade
+template: article.pug
 date: 27 October 2014
 ---
 

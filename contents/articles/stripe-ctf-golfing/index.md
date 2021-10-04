@@ -1,6 +1,6 @@
 ---
 title: Stripe CTF Distributed Systems - Minimal Solutions
-template: article.jade
+template: article.pug
 date: Tue Jan 28 12:12:45 2014
 ---
 

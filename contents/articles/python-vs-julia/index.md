@@ -1,7 +1,7 @@
 ---
 title: Python vs Julia - an example from machine learning
 date: 11 Mar 2014
-template: article.jade
+template: article.pug
 ---
 
 In [Speeding up isotonic regression in scikit-learn][previousarticle],
@@ -25,7 +25,7 @@ and the Julia code is available on GitHub at [Isotonic.jl][isotonicjl]
 The Julia implementation is straightforward implementation of PAVA,
 without any bells and whistles. The `@inbounds` macro was used to
 compare fairly with the Cython implementation, which turns off bounds
-checking as well.  
+checking as well.
 
 <script src="https://gist.github.com/ajtulloch/9484357.js"></script>
 <script src="https://gist.github.com/ajtulloch/9485644.js"></script>

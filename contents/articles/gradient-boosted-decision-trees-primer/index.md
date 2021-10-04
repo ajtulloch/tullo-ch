@@ -1,5 +1,5 @@
 ---
-template: article.jade
+template: article.pug
 title: A Primer on Gradient Boosted Decision Trees
 date: 03/11/2013
 ---

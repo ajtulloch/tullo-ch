@@ -1,5 +1,5 @@
 ---
-template: article.jade
+template: article.pug
 title: The Ito isometry
 date: 03 Nov 2013
 tags: statistics, mathematics

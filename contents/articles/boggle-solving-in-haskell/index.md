@@ -1,6 +1,6 @@
 ---
 title: A Parallel Boggle Solver in Haskell
-template: article.jade
+template: article.pug
 date: 5 April 2014
 ---
 
@@ -111,4 +111,3 @@ prefix up to the given point.
 [Discuss this on Hacker News][hn].
 
 [hn]: https://news.ycombinator.com/item?id=7540479
-

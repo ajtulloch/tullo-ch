@@ -1,5 +1,5 @@
 ---
-template: article.jade
+template: article.pug
 title: Speeding up Decision Tree Training
 date: 03 Nov 2013
 ---
@@ -179,7 +179,7 @@ evaluation of decision trees.
 [hml]: https://github.com/ajtulloch/haskell-ml/
 [follow up paper]: http://statweb.stanford.edu/~jhf/ftp/stobst.pdf
 [paper]: http://statweb.stanford.edu/~jhf/ftp/trebst.pdf
-[swg]: http://golang.org/pkg/sync/#WaitGroup 
+[swg]: http://golang.org/pkg/sync/#WaitGroup
 [Brieman's algorithm]: https://en.wikipedia.org/wiki/Random_forest#Breiman.27s_Algorithm
 [decisiontrees library]: https://github.com/ajtulloch/decisiontrees
 [rsg]: https://github.com/ajtulloch/decisiontrees/blob/master/regression_splitter.go

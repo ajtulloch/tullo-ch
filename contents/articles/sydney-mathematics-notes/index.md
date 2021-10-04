@@ -1,5 +1,5 @@
 ---
-template: article.jade
+template: article.pug
 title: University of Sydney Mathematics Notes
 date: 11 Nov 2012
 ---
@@ -13,7 +13,7 @@ All `.tex` files are available at the
 
 ### Applied Mathematics
 
-* [AMH3 - Interest Rate Models](/static/AMH3LectureNotes.pdf) 
+* [AMH3 - Interest Rate Models](/static/AMH3LectureNotes.pdf)
 * [AMH4 - Advanced Option Pricing](/static/AMH4LectureNotes.pdf)
 * [MATH 3975 - Financial Mathematics](/static/MATH3975LectureNotes.pdf)
 

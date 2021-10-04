@@ -1,7 +1,7 @@
 ---
 title: Consistency of M-estimators
 date: 03 Nov 2013
-template: article.jade
+template: article.pug
 tags: statistics
 ---
 
@@ -12,8 +12,8 @@ $\theta\_{0} \in \Theta$.
 Let $Q\_{n}: \Theta \rightarrow \mathbb{R}$ be any sequence of random
 functions such that
 
-\begin{equation} 
-  \sup\_{\theta \in \Theta} |Q\_{n}(\theta) - Q(\theta)| \rightarrow 0 
+\begin{equation}
+  \sup\_{\theta \in \Theta} |Q\_{n}(\theta) - Q(\theta)| \rightarrow 0
 \end{equation}
 as $n \rightarrow \infty$.
 

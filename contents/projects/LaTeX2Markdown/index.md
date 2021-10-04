@@ -1,6 +1,6 @@
 ---
 title: LaTeX2Markdown Demonstration
-template: article.jade
+template: article.pug
 ---
 
 The following document was generated entirely by the

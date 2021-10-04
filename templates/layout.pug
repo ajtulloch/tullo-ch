@@ -1,10 +1,13 @@
 doctype html
+
+include mixins
+
 html(lang='en')
   head
     block head
       meta(charset='utf-8')
       meta(name="viewport", content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no")
-      mixin description(locals)
+      +description(locals)
 
       title
         block title
@@ -12,13 +15,13 @@ html(lang='en')
       link(rel='alternate', href=locals.url+'/feed.xml', type='application/rss+xml', title=locals.description)
       link(rel='shortcut icon', href='/favicon.ico')
       link(rel='stylesheet', href='/css/style.css')
-      mixin mathjax
-      mixin mixpanel(locals.mixpanel)
-      mixin google_analytics(locals.google_analytics)
+      +mathjax
+      +mixpanel(locals.mixpanel)
+      +google_analytics(locals.google_analytics)
   body
     header#header
       block header
-        mixin header(locals)
+        +header(locals)
     div.container#main
       block content
     footer

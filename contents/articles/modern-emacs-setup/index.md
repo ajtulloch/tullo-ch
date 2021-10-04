@@ -1,7 +1,7 @@
 ---
 title: A modern Emacs setup in OS X
 date: 16 May 2014
-template: article.jade
+template: article.pug
 tags: emacs
 ---
 
@@ -96,4 +96,3 @@ A few resources I used over the past year:
 [Phil Hagelberg's `better-defaults`]: https://github.com/technomancy/better-defaults
 [what the emacs.d?]: http://whattheemacsd.com/
 [dots repository]: https://github.com/ajtulloch/dots/tree/cellar-emacs
-

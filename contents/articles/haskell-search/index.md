@@ -1,7 +1,7 @@
 ---
 title: Purely Functional Tree Search in Haskell
 date: 1 Nov 2013
-template: article.jade
+template: article.pug
 ---
 
 Haskell is an absolute pleasure to write code in, and I've been trying to use it more and more. It's a language that rewards extended effort in a way that `C++` et. al. do not.
@@ -20,7 +20,7 @@ Assume there was a bug in our code - for example, we replace an `||` with an `&&
 
 <script src="https://gist.github.com/ajtulloch/7236642.js"></script>
 
-to 
+to
 
 <script src="https://gist.github.com/ajtulloch/7236654.js"></script>
 

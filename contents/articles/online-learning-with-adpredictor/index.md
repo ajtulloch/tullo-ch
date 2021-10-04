@@ -1,5 +1,5 @@
 ---
-template: article.jade
+template: article.pug
 title: Online Learning with Microsoft's AdPredictor algorithm
 date: 30 Nov 2013
 ---
@@ -18,7 +18,7 @@ given example, and these weights are used as a starting point.
 
 Microsoft's [AdPredictor][] model from ICML 2010 is an online learning
 model that has been successfully applied in the context of click
-prediction for online advertising. 
+prediction for online advertising.
 
 Here, we'll implement the AdPredictor algorithm (in Python), and
 demonstrate how online learning works via visualizations of the
@@ -63,7 +63,7 @@ features and $j$ indexes over the values for the feature).
 
 The paper then proceeds to construct the [graphical model][] show in
 Figure 1 of the paper, and derive the approximate update equations
-from message passing in the factor graph.  The update equations are 
+from message passing in the factor graph.  The update equations are
 
 \begin{align}
   \mu\_{i, j} &\leftarrow \mu\_{i, j} + y \cdot x\_{i, j} \cdot
@@ -72,7 +72,7 @@ from message passing in the factor graph.  The update equations are
   \sigma^{2}\_{i, j} &\leftarrow \sigma^{2}\_{i, j} \left(1 - x\_{i, j}
   \cdot \frac{\sigma^{2}\_{i, j}}{\sigma^{2}} \cdot w \left(\frac{y \cdot
   \langle \mathbf{x}, \mathbf{\mu} \rangle}{\Sigma} \right) \right)
-\end{align} 
+\end{align}
 
 where $\Sigma^{2} = \beta^{2} + \langle \mathbf{x},
 \mathbf{\sigma^{2}} \rangle$ represents the 'total variance' of the sample,
@@ -127,7 +127,7 @@ and one to have a strongly negative effect ($\mu\_{i, j} < 0$). These are labell
 
 The first demonstration illustrates how the weights are lazily
 initialized and our Gaussian beliefs begin converging to the ground
-truth.  
+truth.
 
 ![Initial learning of the weights](initial_learning.gif)
 

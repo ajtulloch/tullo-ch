@@ -1,5 +1,5 @@
 ---
-template: article.jade
+template: article.pug
 title: Speeding up isotonic regression in scikit-learn by 5,000x
 date: 9 Mar 2014
 ---
