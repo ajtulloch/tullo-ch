@@ -4,12 +4,12 @@ title: Improving PyTorch inference performance on GPUs with a few simple tricks
 date: 03 Oct 2021
 ---
 
-We hear a lot that ["machine learning systems are stuck in a rut"](https://dl.acm.org/doi/10.1145/3317550.3321441). This is might be expanded out as "standard architectures run  at high efficiencies due to disproportionate engineering effort, while theoretically better but non-standard architectures run at low efficiencies due to the lack of specialized engineering work on these alternatives and the failure of our systems to provide generalized performance."
+We hear a lot these days that ["machine learning systems are stuck in a rut"](https://dl.acm.org/doi/10.1145/3317550.3321441). This is might be expanded out as "standard architectures run  at high efficiencies due to disproportionate engineering effort, while theoretically better but non-standard architectures run at low efficiencies due to the lack of specialized engineering work on these alternatives and the failure of our systems to provide generalized performance."
 
 
-This is a reasonable thesis. But as long as it is the status quo, we may as well enjoy the empirical efficiencies from standard architectures. That is, less "stuck-in-a-rut" thinking and more "pigs-at-a-trough" thinking! If you're going to use vanilla architectures and not play with the fanciest NAS-discovered variants, you may as well take advantage of their practical efficiency.
+This is a reasonable thesis. But as long as it is the status quo, we may as well enjoy the empirical efficiencies from standard architectures. That is, less "stuck-in-a-rut" thinking and more "pigs-at-a-trough" thinking! If you're going to use vanilla architectures and not play with the fanciest modern variants, you may as well take advantage of their practical efficiency.
 
-Out of the box, PyTorch doesn't necessarily provide the highest performance for these models. There are good (and bad) reasons for this, but regardless it's generally very simple to achieve very high [roofline](https://en.wikipedia.org/wiki/Roofline_model) efficiency during inference with a few simple steps.
+Out of the box, PyTorch doesn't always provide the best performance for these models. There are good (and bad) reasons for this, but regardless it's generally very simple to achieve very high [roofline](https://en.wikipedia.org/wiki/Roofline_model) efficiency during inference with a few simple steps.
 
 Here, I'll just cover two quick examples: convolutional neural networks (where ResNet-101 is an exemplar rut architecture) and Transformer encoders (where BERT-Large is an exemplar rut architecture), run in float16 on NVIDIA GPUs. This is mostly focusing on the sweet spot of modern ML systems - large(ish) models, NVIDIA GPUs, half-precision, reasonably large batch sizes – and with a little work the results are great.
 
@@ -34,7 +34,7 @@ Transformer encoders require just a few components to be well implemented to be 
 
 Luckily, there are a large number of libraries that have produced high-quality and performance tuned implementations of these primitives for inference. These include [NVIDIA FasterTransformer](https://github.com/NVIDIA/FasterTransformer), [ByteDance LightSeq](https://github.com/bytedance/lightseq), [Microsoft DeepSpeed](https://github.com/microsoft/DeepSpeed), and many more.
 
-Leveraging these from a vanilla PyTorch Transformer implementation (from something like [`fairseq`](https://github.com/pytorch/fairseq), [HuggingFace transformers](https://huggingface.co/transformers/), or a [`nn.TransformerEncoder`](https://pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html) is a mildly annoying but generally worthwhile exercise - extract out the weights from the vanilla model, reformat them for the target inference runtime, instantiate the new `nn.Module`, and swap out the old encoder instance for the optimized one.
+Using these optimized runtimes with an existed trained model in a framework like [`fairseq`](https://github.com/pytorch/fairseq), [HuggingFace transformers](https://huggingface.co/transformers/), or a [`nn.TransformerEncoder`](https://pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html) is a mildly annoying but generally worthwhile exercise - extract out the weights from the vanilla model, reformat them for the target inference runtime, instantiate the new `nn.Module`, and swap out the old encoder for the optimized one.
 
 There's really not much more to it than that. If you do this, you might expect roughly 2-4x improvements compared to a naive implementation, and again get to roughly 160TFLOP/s or more.
 
@@ -48,7 +48,7 @@ The high roofline efficiencies quoted here occur at reasonably large batch sizes
 
 In terms of increasing the effective amount of work at inference time, a good place to start would be to use a dynamic batching queue (first popularized by [DeepSpeech 2](https://arxiv.org/abs/1512.02595)) and implemented in [TorchServe](https://pytorch.org/serve/batch_inference_with_ts.html), [Triton](https://github.com/triton-inference-server/server), and many others. Then, look at increasing the number of streams, and ensure you aren't bottlenecked on the I/O or pre/post-processing.
 
-As a rough guide to improving efficiency:
+As a rough guide to improving the inference efficiency of standard architectures on PyTorch:
 
 1. Ensure you are using half-precision on GPUs with `model.cuda().half()`
 2. Ensure the whole model runs on the GPU, without a lot of host-to-device or device-to-host transfers.
