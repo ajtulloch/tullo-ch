@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>A modern Emacs setup in OS X &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/modern-emacs-setup/">A modern Emacs setup in OS X</a></h1><div class="post-meta"><p class="date">16 May 2014</p></div><div class="the-content"><section class="content"><p>About a year ago I switched from Vim to Emacs, and I couldn&#39;t be
+happier about the move.  I spent some time getting a setup I was happy
+with, and thought I&#39;d share it for those who are also looking to move
+to Emacs.</p>
+<p>For more information, my entire <code>.emacs.d</code> is available in my
+<a href="https://github.com/ajtulloch/dots/tree/cellar-emacs">dots repository</a> on GitHub.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<script
+src="https://gist.github.com/ajtulloch/0ba98b93800d9ca97f2a.js"></script>
+
+<p>Install <a href="https://github.com/rdallasgray/pallet">Pallet</a>, a wrapper for Cask used to manage your Emacs
+packages (think <code>apt-get</code>, <code>yum</code>, etc.)</p>
+<p>Copy <a href="https://github.com/ajtulloch/dots/blob/cellar-emacs/emacs/Cask">my Cask file</a> into your <code>~/.emacs.d/Cask</code>, and run <code>cask
+install</code>. This will pull down all the listed packages into the <code>.cask</code>
+directory and let you immediately get started.</p>
+<h2 id="customization">Customization</h2>
+<p>In terms of structuring and managing an ever-expanding set of
+customizations, I&#39;ve found the following layout seems to work well.</p>
+<p>For your <code>~/.emacs.d/init.el</code>, use the following:</p>
+<script
+src="https://gist.github.com/27e1c1ac1a1e680f5398.js"></script>
+
+<p>This instructs Emacs to initialize packages with Cask/Pallet, and then
+loads all the customizations in the order you specify in your
+<code>~/.emacs.d/customizations</code>.</p>
+<p>Entries in the <code>~/.emacs.d/customizations</code> are of the form
+<code>02-global.el</code>.  This guarantees initialization ordering (which
+can be useful), and allows you to separate settings naturally (one
+file for each language, etc.)</p>
+<p>I&#39;ll quickly mention a few generic customizations I&#39;ve added, but see
+the full <a href="https://github.com/ajtulloch/dots/tree/cellar-emacs">.emacs.d</a> for a more complete set of
+changes (including various customizations for Haskell, Go, Python,
+Julia, R, LaTeX, Scala, JS, etc).</p>
+<h3 id="some-useful-shortcuts">Some Useful Shortcuts</h3>
+<p>This is just a laundry-list of shortcuts I&#39;ve found useful at various
+times.  They rely on various packages and custom functions - see the
+full repository for details.</p>
+<script src="https://gist.github.com/772afb5cbebf1e8bf2d8.js"></script>
+
+<h3 id="magit">Magit</h3>
+<script
+src="https://gist.github.com/0fcd723f30bd0760ac1d.js"></script>
+
+<p>This makes it cleaner to switch into Magit - simply pressing <code>C-c C-g</code>
+puts Magit into fullscreen mode, where you can
+cleanup/stage/commit/amend/push with only a few presses, and then
+pressing <code>q</code> takes you back to the window state you had before
+entering Magit.  It&#39;s really a pleasure to use.</p>
+<h3 id="github-gist-utilities">GitHub Gist utilities</h3>
+<script src="https://gist.github.com/5a631e9dde9d812e3633.js"></script>
+
+<p>This makes it easy to take a buffer or region in Emacs and view it in
+various external services - currently <a href="http://mkdown.com">mkdown.com</a> for pretty
+Markdown viewing and <a href="http://nbviewer.ipython.org/">iPython NBViewer</a> for iPython notebooks.
+These are the kind of small, useful functions that can be easily
+written with elisp (as opposed to the pain of trying to use
+vimscript for anything non-trivial).</p>
+<h2 id="sources-of-inspiration">Sources of Inspiration</h2>
+<p>A few resources I used over the past year:</p>
+<ul>
+<li><a href="https://sites.google.com/site/steveyegge2/effective-emacs">Yegge&#39;s Effective Emacs</a> is an excellent resource.</li>
+<li><a href="https://github.com/technomancy/better-defaults">Phil Hagelberg&#39;s <code>better-defaults</code></a> is great (and in the</li>
+<li>aforementioned Cask file).</li>
+<li><a href="http://whattheemacsd.com/">what the emacs.d?</a> has some excellent snippets you can use.</li>
+</ul>
+</section></div><div class="meta clearfix"><ul class="post-categories"><li>emacs</li></ul></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

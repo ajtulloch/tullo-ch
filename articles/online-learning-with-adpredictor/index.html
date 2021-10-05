@@ -1,0 +1,142 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>Online Learning with Microsoft's AdPredictor algorithm &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/online-learning-with-adpredictor/">Online Learning with Microsoft's AdPredictor algorithm</a></h1><div class="post-meta"><p class="date">30 November 2013</p></div><div class="the-content"><section class="content"><p>Online learning (as opposed to more traditional batched machine
+learning) is more and more commonly applied to training machine
+learned models at scale. The chief advantage is that the model is
+trained via a streaming approach, and thus the entire dataset used
+when training does not need to be held in memory at any given time.</p>
+<p>That is to say, we can consider that a model parameters have a current
+state $\mathbf{w}$, and we observe our examples $(y, \mathbf{x})$ with
+($y$ the label and $x$ the features of the given example) in a
+streaming fashion. At each example, we update our weights from the
+given example, and these weights are used as a starting point.</p>
+<p>Microsoft&#39;s <a href="http://research.microsoft.com/pubs/122779/adpredictor%20icml%202010%20-%20final.pdf">AdPredictor</a> model from ICML 2010 is an online learning
+model that has been successfully applied in the context of click
+prediction for online advertising.</p>
+<p>Here, we&#39;ll implement the AdPredictor algorithm (in Python), and
+demonstrate how online learning works via visualizations of the
+trained parameters $\mathbf{w}$.</p>
+<h2 id="the-adpredictor-algorithm">The AdPredictor Algorithm</h2>
+<p>From the paper&#39;s abstract,</p>
+<blockquote>
+<p>We describe a new Bayesian click-through rate (CTR) prediction
+algorithm used for Sponsored Search in Microsoft’s Bing search engine.
+The algorithm is based on a probit regression model that maps discrete
+or real-valued input features to probabilities. It maintains Gaussian
+beliefs over weights of the model and performs Gaussian online updates
+derived from approximate message passing. Scalability of the algorithm
+is ensured through a principled weight pruning procedure and an
+approximate parallel implementation. We discuss the challenges arising
+from evaluating and tuning the predictor as part of the complex system
+of sponsored search where the predictions made by the algorithm decide
+about future training sample composition. Finally, we show
+experimental results from the production system and compare to a
+calibrated Naïve Bayes algorithm.</p>
+</blockquote>
+<p>The online <a href="http://en.wikipedia.org/wiki/Probit_model">probit regression</a> model described in the paper is
+superficially similar to the more commonly known <a href="https://en.wikipedia.org/wiki/Logistic_regression">logistic regression</a>,
+with sampling distribution of the model given by</p>
+<p>\begin{align}
+  P(y = +1 , | , \mathbf{x}, \mathbf{w}) = \Phi \left( \frac{\langle
+  \mathbf{w}, \mathbf{x} \rangle}{\beta} \right)
+\end{align}</p>
+<p>where $\mathbf{w}$ are the set of weights, $\mathbf{x}$
+are the set of features for the given event, $\beta$ is a model
+hyper-parameter, and $\Phi$ is the CDF of the normal distribution.</p>
+<p>The weights $w_{i, j}$ are Gaussian distributed, with mean
+$\mu_{i,j}$ and variance $\sigma^2_{i, j}$ (where $i$ indexes over
+features and $j$ indexes over the values for the feature).</p>
+<p>The paper then proceeds to construct the <a href="http://en.wikipedia.org/wiki/Graphical_model">graphical model</a> show in
+Figure 1 of the paper, and derive the approximate update equations
+from message passing in the factor graph.  The update equations are</p>
+<p>\begin{align}
+  \mu_{i, j} &amp;\leftarrow \mu_{i, j} + y \cdot x_{i, j} \cdot
+  \frac{\sigma^{2}_{i, j}}{\Sigma} \cdot v \left(\frac{y \cdot \langle
+  \mathbf{x}, \mathbf{\mu} \rangle}{\Sigma} \right) \\
+  \sigma^{2}_{i, j} &amp;\leftarrow \sigma^{2}_{i, j} \left(1 - x_{i, j}
+  \cdot \frac{\sigma^{2}_{i, j}}{\sigma^{2}} \cdot w \left(\frac{y \cdot
+  \langle \mathbf{x}, \mathbf{\mu} \rangle}{\Sigma} \right) \right)
+\end{align}</p>
+<p>where $\Sigma^{2} = \beta^{2} + \langle \mathbf{x},
+\mathbf{\sigma^{2}} \rangle$ represents the &#39;total variance&#39; of the sample,
+$v(t) = \frac{\phi(t)}{\Phi(t)}$ and $w(t) = v(t) \cdot (v(t) + t)$
+represent the additive and multiplicative corrections to the truncated
+Gaussian, with $\phi, \Phi$ being the PDF and CDF, respectively, of
+the Normal distribution.</p>
+<p>For further details on the derivation of this equation, see the
+<a href="http://research.microsoft.com/pubs/122779/adpredictor%20icml%202010%20-%20final.pdf">AdPredictor</a> paper and the <a href="http://research.microsoft.com/pubs/67956/NIPS2006_0688.pdf">TrueSkill</a> paper by the same authors
+describing a similar algorithm, though with a more detailed treatment
+of the underlying mathematics.</p>
+<h2 id="implementation">Implementation</h2>
+<p>The implementation is quite straightforward - see the example code in the
+<a href="https://github.com/ajtulloch/adpredictor">AdPredictor repository</a> on GitHub for more information.</p>
+<p>The main body of the code is inlined below.</p>
+<script src="https://gist.github.com/ajtulloch/7724979.js"></script>
+
+<p>It&#39;s a fairly straightforward implementation of the equations
+described previously. This approach doesn&#39;t deal at all with
+distributed/parallelized inference, though that can be fairly nicely
+incorporated into the AdPredictor framework as described in the
+original paper.</p>
+<h2 id="demonstration">Demonstration</h2>
+<p>We&#39;ll now test our implementation with a few demonstrations of the
+model learning a ground truth in an online fashion.</p>
+<p>To replicate these demonstrations, just run the following lines in
+your terminal:</p>
+<pre><code>$ git clone https://github.com/ajtulloch/adpredictor
+$ cd adpredictor
+$ virtualenv env &amp;&amp; source env/bin/activate
+$ make demo</code></pre><p>The setting is a simple one - we have five features (including the
+bias), each with ten possible values (so fourty-one Gaussian weights
+$w_{i, j}$ in total are tracked). Of these features, we set one
+weight to have a ground truth of having a strongly positive effect
+($\mu_{i, j} &gt; 0$),
+and one to have a strongly negative effect ($\mu_{i, j} &lt; 0$). These are labelled &#39;+&#39; and
+&#39;-&#39; in the graphs below.  All other weights have zero effect
+($\mu_{i, j} = 0$).</p>
+<p>The first demonstration illustrates how the weights are lazily
+initialized and our Gaussian beliefs begin converging to the ground
+truth.</p>
+<p><img src="/articles/online-learning-with-adpredictor/initial_learning.gif" alt="Initial learning of the weights"></p>
+<p>As the number of examples seen by the predictor increases, the weights
+stabilize at their ground truth values.</p>
+<p><img src="/articles/online-learning-with-adpredictor/convergence_learning.gif" alt="Convergence of the weights to ground truth"></p>
+<p>Finally, we demonstrate the power of online learning by adjusting the
+ground truth and seeing how our model adapts in real time. This can
+happen naturally in an online advertising - perhaps a datasource
+providing a feature goes down, or a campaign adjusts the
+distribution of users seen by the model.  Being able to adapt in real
+time is a very powerful advantage offered by online learned ML models.</p>
+<p>Here, we simulate this by removing the adjustments to the two weights
+mentioned above, so all weights have ground truth $\mu_{i, j} = 0$.
+This adjustment takes place after $N = 200$ examples have been seen.
+We see the model rapidly learns the modified ground truth, as desired.</p>
+<p><img src="/articles/online-learning-with-adpredictor/online_learning.gif" alt="Online learning as ground truth is adjusted"></p>
+<h2 id="conclusion">Conclusion</h2>
+<p>We&#39;ve introduced, implemented, and visualized the AdPredictor model
+for online learning.
+There are <a href="http://www.cs.berkeley.edu/~jduchi/projects/DuchiHaSi10.pdf">many</a> <a href="http://people.cs.uchicago.edu/~kalai/papers/onlineopt/onlineopt.pdf">other</a> <a href="http://jmlr.org/proceedings/papers/v15/mcmahan11b/mcmahan11b.pdf">approaches</a> that are worth exploring
+in future posts.</p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

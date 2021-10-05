@@ -1,0 +1,331 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>Elements of Statistical Learning - Chapter 2 Solutions &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/elements-of-statistical-learning/">Elements of Statistical Learning - Chapter 2 Solutions</a></h1><div class="post-meta"><p class="date">1 November 2012</p></div><div class="the-content"><section class="content"><p>The Stanford textbook <a href="http://statweb.stanford.edu/~tibs/ElemStatLearn/">Elements of Statistical Learning</a> by
+<a href="http://www.stanford.edu/~hastie/">Hastie</a>, <a href="http://statweb.stanford.edu/~tibs/">Tibshirani</a>, and <a href="http://statweb.stanford.edu/~jhf/">Friedman</a>
+is an excellent (and <a href="http://www.stanford.edu/~hastie/local.ftp/Springer/ESLII_print5.pdf">freely available</a>) graduate-level
+text in data mining and machine learning. I&#39;m currently working
+through it, and I&#39;m putting my (partial) exercise solutions up for
+anyone who might find them useful. The first set of solutions is for
+Chapter 2, <em>An Overview of Supervised Learning</em>, introducing least
+squares and <em>k</em>-nearest-neighbour techniques.</p>
+<h3 id="exercise-solutions">Exercise Solutions</h3>
+<p>See the solutions in <a href="/static/ESL-Solutions.pdf">PDF</a> format (<a href="/static/ESL-Chap2Solutions.tex">source</a>) for
+a more pleasant reading experience. This webpage was created from the
+LaTeX source using the <a href="/projects/LaTeX2Markdown/">LaTeX2Markdown</a>
+utility - check it out on
+<a href="https://github.com/ajtulloch/LaTeX2Markdown">GitHub</a>.</p>
+<h2 id="overview-of-supervised-learning">Overview of Supervised Learning</h2>
+<h4 id="exercise-2-1">Exercise 2.1</h4>
+<blockquote>
+<p>Suppose that each of $K$-classes has an associated target $t_k$,
+  which is a vector of all zeroes, except a one in the $k$-th
+  position. Show that classifying the largest element of $\hat y$
+  amounts to choosing the closest target, $\min_k \| t_k - \hat y
+  \|$ if the elements of $\hat y$ sum to one.</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>The assertion is equivalent to showing that
+\begin{equation}
+\text{argmax}_i \hat y_i = \text{argmin}_k \| t_k - \hat y \|
+= \text{argmin}_k \|\hat y - t_k \|^2
+\end{equation}
+by monotonicity of $x \mapsto x^2$ and symmetry of the norm.</p>
+<p>WLOG, let $\| \cdot \|$ be the Euclidean norm $\| \cdot
+\|_2$. Let $k = \text{argmax}_i \hat y_i$, with $\hat y_k = \max
+y_i$. Note that then $\hat y_k \geq \frac{1}{K}$, since $\sum \hat
+y_i = 1$.</p>
+<p>Then for any $k&#39; \neq k$ (note that $y_{k&#39;} \leq y_k$), we have
+\begin{align} \| y - t_{k&#39;} \|_2^2 - \| y - t_k \|_2^2 &amp;=
+y_k^2 + \left(y_{k&#39;} - 1 \right)^2 - \left( y_{k&#39;}^2 + \left(y_k -
+1 \right)^2 \right) \\ &amp;= 2 \left(y_k - y_{k&#39;}\right) \\ &amp;\geq 0
+\end{align} since $y_{k&#39;} \leq y_k$ by assumption.</p>
+<p>Thus we must have</p>
+<p>\begin{equation}
+  \label{eq:6}
+  \text{argmin}_k \| t_k - \hat y \| = \text{argmax}_i \hat y_i
+\end{equation}</p>
+<p>as required.</p>
+<h4 id="exercise-2-2">Exercise 2.2</h4>
+<blockquote>
+<p>Show how to compute the Bayes decision boundary for the simulation
+  example in Figure 2.5.</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>The Bayes classifier is
+\begin{equation}
+  \label{eq:2}
+  \hat G(X) = \text{argmax}_{g \in \mathcal G} P(g | X = x ).
+\end{equation}</p>
+<p>In our two-class example $\textbf{orange}$ and $\textbf{blue}$, the
+decision boundary is the set where</p>
+<p>\begin{equation}
+  \label{eq:5}
+   P(g=\textbf{blue} | X = x) = P(g =\textbf{orange} | X = x) = \frac{1}{2}.
+\end{equation}</p>
+<p>By the Bayes rule, this is equivalent to the set of points where</p>
+<p>\begin{equation}
+  \label{eq:4}
+  P(X = x | g = \textbf{blue}) P(g = \textbf{blue}) = P(X = x | g =
+  \textbf{orange}) P(g = \textbf{orange})
+\end{equation}</p>
+<p>As we know $P(g)$ and $P(X=x|g)$, the decision boundary can be
+calculated.</p>
+<h4 id="exercise-2-3">Exercise 2.3</h4>
+<blockquote>
+<p>Derive equation (2.24)</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>TODO</p>
+<h4 id="exercise-2-4">Exercise 2.4</h4>
+<blockquote>
+<p>Consider $N$ data points uniformly distributed in a $p$-dimensional
+  unit ball centered at the origin. Show the the median distance from
+  the origin to the closest data point is given by
+  \begin{equation}
+    \label{eq:7}
+    d(p, N) = \left(1-\left(\frac{1}{2}\right)^{1/N}\right)^{1/p}
+  \end{equation}</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>Let $r$ be the median distance from the origin to the closest data
+point. Then
+\begin{equation}
+  \label{eq:8}
+  P(\text{All $N$ points are further than $r$ from the origin}) = \frac{1}{2}
+\end{equation}
+by definition of the median.</p>
+<p>Since the points $x_i$ are independently distributed, this implies
+that
+\begin{equation}
+  \label{eq:9}
+   \frac{1}{2} = \prod_{i=1}^N P(\|x_i\| &gt; r)
+\end{equation}
+and as the points $x_i$ are uniformly distributed in the unit ball,
+we have that
+\begin{align}
+  P(\| x_i \| &gt; r) &amp;= 1 - P(\| x_i \| \leq r) \\ &amp;= 1 -
+  \frac{Kr^p}{K} \\ &amp;= 1 - r^p
+\end{align}</p>
+<p>Putting these together, we obtain that
+\begin{equation}
+  \label{eq:10}
+  \frac{1}{2} = \left(1-r^p \right)^{N}
+\end{equation}
+and solving for $r$, we have
+\begin{equation}
+  \label{eq:11}
+  r = \left(1-\left(\frac{1}{2}\right)^{1/N}\right)^{1/p}
+\end{equation}</p>
+<h4 id="exercise-2-5">Exercise 2.5</h4>
+<blockquote>
+<p>Consider inputs drawn from a spherical multivariate-normal
+distribution $X \sim N(0,\mathbf{1}_p)$. The squared distance from
+any sample point to the origin has a $\chi^2_p$ distribution with
+mean $p$. Consider a prediction point $x_0$ drawn from this
+distribution, and let $a = \frac{x_0}{\| x_0\|}$ be an
+associated unit vector. Let $z_i = a^T x_i$ be the projection of
+each of the training points on this direction.</p>
+<p>Show that the $z_i$
+are distributed $N(0,1)$ with expected squared distance from the
+origin 1, while the target point has expected squared distance $p$
+from the origin.</p>
+<p>Hence for $p = 10$, a randomly drawn test point is
+about 3.1 standard deviations from the origin, while all the
+training points are on average one standard deviation along
+direction a. So most prediction points see themselves as lying on
+the edge of the training set.</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>Let $z_i = a^T x_i = \frac{x_0^T}{\| x_0 \|} x_i$. Then
+$z_i$ is a linear combination of $N(0,1)$ random variables, and hence
+normal, with expectation zero and variance</p>
+<p>\begin{equation}
+  \label{eq:12}
+  \text{Var}(z_i) = \| a^T \|^2 \text{Var}(x_i) = \text{Var}(x_i) = 1
+\end{equation}
+as the vector $a$ has unit length and $x_i \sim N(0, 1)$.</p>
+<p>For each target point $x_i$, the squared distance from the origin is
+a $\chi^2_p$ distribution with mean $p$, as required.</p>
+<h4 id="exercise-2-6">Exercise 2.6</h4>
+<blockquote>
+<ol>
+<li>Derive equation (2.27) in the notes.</li>
+<li>Derive equation (2.28) in the notes.</li>
+</ol>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<ol>
+<li>We have
+\begin{align}
+EPE(x_0) &amp;= E_{y_0 | x_0} E_{\mathcal{T}}(y_0 - \hat y_0)^2
+\\
+&amp;= \text{Var}(y_0|x_0) + E_{\mathcal T}[\hat y_0 - E_{\mathcal
+ T} \hat y_0]^2 + [E_{\mathcal T} - x_0^T \beta]^2 \\
+&amp;= \text{Var}(y_0 | x_0) + \text{Var}_\mathcal{T}(\hat y_0) +
+\text{Bias}^2(\hat y_0).
+\end{align}
+We now treat each term individually. Since the estimator
+is unbiased, we have that the third term is zero. Since $y_0 = x_0^T
+\beta + \epsilon$ with $\epsilon$ an $N(0,\sigma^2)$ random variable,
+we must have $\text{Var}(y_0|x_0) = \sigma^2$.
+The middle term is more difficult. First, note that we have
+\begin{align}
+\text{Var}_{\mathcal T}(\hat y_0) &amp;= \text{Var}_{\mathcal
+ T}(x_0^T \hat \beta) \\ &amp;= x_0^T \text{Var}_{\mathcal T}(\hat
+\beta) x_0 \\ &amp;= E_{\mathcal T} x_0^T \sigma^2 (\mathbf{X}^T
+\mathbf{X})^{-1} x_0
+\end{align} by conditioning (3.8) on $\mathcal T$.</li>
+<li>TODO</li>
+</ol>
+<h4 id="exercise-2-7">Exercise 2.7</h4>
+<blockquote>
+<p>Consider a regression problem with inputs $x_i$ and outputs $y_i$,
+and a parameterized model $f_\theta(x)$ to be fit with least squares.
+Show that if there are observations with <em>tied</em> or <em>identical</em> values
+of $x$, then the fit can be obtained from a reduced weighted least
+squares problem.</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>This is relatively simple. WLOG, assume that $x_1 = x_2$, and all
+other observations are unique. Then our RSS function in the general
+least-squares estimation is</p>
+<p>\begin{equation}
+  \label{eq:13}
+  RSS(\theta) = \sum_{i=1}^N \left(y_i - f_\theta(x_i) \right)^2 =
+  \sum_{i=2}^N w_i \left(y_i - f_\theta(x_i) \right)^2
+\end{equation}</p>
+<p>where
+\begin{equation}
+  \label{eq:14}
+  w_i = \begin{cases} 2 &amp; i = 2 \\ 1 &amp; \text{otherwise} \end{cases}
+\end{equation}</p>
+<p>Thus we have converted our least squares estimation into a reduced
+weighted least squares estimation. This minimal example can be easily
+generalised.</p>
+<h4 id="exercise-2-8">Exercise 2.8</h4>
+<blockquote>
+<p>Suppose that we have a sample of $N$ pairs $x_i, y_i$, drawn IID
+from the distribution such that \begin{align} x_i \sim h(x), \\
+y_i = f(x_i) + \epsilon_i, \\ E(\epsilon_i) = 0, \\
+\text{Var}(\epsilon_i) = \sigma^2. \end{align} We construct an
+estimator for $f$ linear in the $y_i$,
+\begin{equation}
+  \label{eq:16}
+  \hat f(x_0) = \sum_{i=1}^N \ell_i(x_0; \mathcal X) y_i
+\end{equation}
+where the weights $\ell_i(x_0; X)$ do not depend on the $y_i$,
+but do depend on the training sequence $x_i$ denoted by $\mathcal
+X$.</p>
+<ol>
+<li>Show that the linear regression and $k$-nearest-neighbour
+regression are members of this class of estimators. Describe
+explicitly the weights $\ell_i(x_0; \mathcal X)$ in each of these
+cases.</li>
+<li>Decompose the conditional mean-squared error
+\begin{equation}
+\label{eq:17}
+E_{\mathcal Y | \mathcal X} \left( f(x_0) - \hat f(x_0) \right)^2
+\end{equation}
+into a conditional squared bias and a conditional variance
+component. $\mathcal Y$ represents the entire training sequence of
+$y_i$.</li>
+<li>Decompose the (unconditional) MSE
+\begin{equation}
+\label{eq:18}
+E_{\mathcal Y, \mathcal X}\left(f(x_0) - \hat f(x_0) \right)^2
+\end{equation}
+into a squared bias and a variance component.</li>
+<li>Establish a relationship between the square biases and variances in
+the above two cases.</li>
+</ol>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<ol>
+<li><p>Recall that the estimator for $f$ in the linear regression case is
+given by
+\begin{equation}
+\label{eq:19}
+\hat f(x_0) = x_0^T \beta
+\end{equation}
+where $\beta = (X^T X)^{-1} X^T y$. Then we can simply write
+\begin{equation}
+\label{eq:20}
+\hat f(x_0) = \sum_{i=1}^N \left( x_0^T (X^T X)^{-1} X^T \right)_i y_i.
+\end{equation}
+Hence
+\begin{equation}
+\label{eq:21}
+\ell_i(x_0; \mathcal X) = \left( x_0^T (X^T X)^{-1} X^T \right)_i.
+\end{equation}
+In the $k$-nearest-neighbour representation, we have
+\begin{equation}
+\label{eq:22}
+\hat f(x_0) = \sum_{i=1}^N \frac{y_i}{k} \mathbf{1}_{x_i \in N_k(x_0)}
+\end{equation}
+where $N_k(x_0)$ represents the set of $k$-nearest-neighbours of
+$x_0$. Clearly,
+\begin{equation}
+\label{eq:23}
+\ell_i(x_0; \mathcal X) = \frac{1}{k} \mathbf{1}_{x_i \in N_k(x_0)}
+\end{equation}</p>
+</li>
+<li><p>TODO</p>
+</li>
+<li><p>TODO</p>
+</li>
+<li><p>TODO</p>
+</li>
+</ol>
+<h4 id="exercise-2-9">Exercise 2.9</h4>
+<blockquote>
+<p>Compare the classification performance of linear regression and
+$k$-nearest neighbour classification on the <code>zipcode</code> data. In
+particular, consider on the <code>2</code>&#39;s and <code>3</code>&#39;s, and $k = 1, 3, 5, 7, 15$.
+Show both the training and test error for each choice.</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>Our implementation in R and graphs are attached.</p>
+<script src="https://gist.github.com/ajtulloch/7516548.js"></script>
+
+<img class="R" src="exercise_2_8.png"/>
+
+<h4 id="exercise-2-10">Exercise 2.10</h4>
+<blockquote>
+<p>Consider a linear regression model with $p$ parameters, fitted by
+OLS to a set of trainig data $(x_i, y_i)_{1 \leq i \leq N}$ drawn
+at random from a population. Let $\hat \beta$ be the least squares
+estimate. Suppose we have some test data $(\tilde x_i, \tilde
+y_i)_{1 \leq i \leq M}$ drawn at random from the same population
+as the training data. If $R_{tr}(\beta) = \frac{1}{N} \sum_{i=1}^N
+\left(y_i \beta^T x_i \right)^2$ and $R_{te}(\beta) = \frac{1}{M}
+\sum_{i=1}^M \left( \tilde y_i - \beta^T \tilde x_i \right)^2$,
+prove that
+\begin{equation}
+  \label{eq:15}
+  E(R_{tr}(\hat \beta)) \leq E(R_{te}(\hat \beta))
+\end{equation}
+where the expectation is over all that is random in each expression.</p>
+</blockquote>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

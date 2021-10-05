@@ -1,0 +1,297 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/pytorch-gpu-inference-performance/">Improving PyTorch inference performance on GPUs with a few simple tricks</a></h1><div class="post-meta"><p class="date">3 October 2021</p></div><div class="the-content"><section class="intro-content"><p>We hear a lot these days that <a href="https://dl.acm.org/doi/10.1145/3317550.3321441">&quot;machine learning systems are stuck in a rut&quot;</a>. This is might be expanded out as &quot;standard architectures run  at high efficiencies due to disproportionate engineering effort, while theoretically better but non-standard architectures run at low efficiencies due to the lack of specialized engineering work on these alternatives and the failure of our systems to provide generalized performance.&quot;</p>
+<p>This is a reasonable thesis. But as long as it is the status quo, we may as well enjoy the empirical efficiencies from standard architectures. That is, less &quot;stuck-in-a-rut&quot; thinking and more &quot;pigs-at-a-trough&quot; thinking! If you&#39;re going to use vanilla architectures and not play with the fanciest modern variants, you may as well take advantage of their practical efficiency.</p>
+<p>Out of the box, PyTorch doesn&#39;t always provide the best performance for these models. There are good (and bad) reasons for this, but regardless it&#39;s generally very simple to achieve very high <a href="https://en.wikipedia.org/wiki/Roofline_model">roofline</a> efficiency during inference with a few simple steps.</p>
+<p>Here, I&#39;ll just cover two quick examples: convolutional neural networks (where ResNet-101 is an exemplar rut architecture) and Transformer encoders (where BERT-Large is an exemplar rut architecture), run in float16 on NVIDIA GPUs. This is mostly focusing on the sweet spot of modern ML systems - large(ish) models, NVIDIA GPUs, half-precision, reasonably large batch sizes – and with a little work the results are great.</p>
+</section><p><a class="more" href="/articles/pytorch-gpu-inference-performance/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/cambridge-mathematics-notes/">Cambridge Part III Mathematics Notes</a></h1><div class="post-meta"><p class="date">27 October 2014</p></div><div class="the-content"><section class="intro-content"><p>I&#39;ve cleaned up (somewhat) my notes from Cambridge Part III and have
+put them online - with LaTeX sources available on <a href="https://github.com/ajtulloch/CambridgeMathematicsPartIII">GitHub</a> and PDFs
+linked below.</p>
+<h3 id="advanced-financial-models">Advanced Financial Models</h3>
+<ul>
+<li><a href="/static/cambridge/AdvancedFinancialModels-LectureNotes.pdf">Lecture Notes</a></li>
+<li><a href="/static/cambridge/AdvancedFinancialModels-Summary.pdf">Summary</a></li>
+</ul>
+<h3 id="advanced-probability">Advanced Probability</h3>
+<ul>
+<li><a href="/static/cambridge/AdvancedProbability-LectureNotes.pdf">Lecture Notes</a></li>
+</ul>
+<h3 id="applied-bayesian-statistics">Applied Bayesian Statistics</h3>
+<ul>
+<li><a href="/static/cambridge/AppliedBayesianStatistics-Summary.pdf">Summary</a></li>
+</ul>
+<h3 id="convex-optimization">Convex Optimization</h3>
+<ul>
+<li><a href="/static/cambridge/ConvexOptimization-LectureNotes.pdf">Lecture Notes</a></li>
+<li><a href="/static/cambridge/ConvexOptimization-Summary.pdf">Summary</a></li>
+</ul>
+<h3 id="mathematics-of-operations-research">Mathematics Of Operations Research</h3>
+<ul>
+<li><a href="/static/cambridge/MathematicsOfOperationsResearch-LectureNotes.pdf">Lecture Notes</a></li>
+<li><a href="/static/cambridge/MathematicsOfOperationsResearch-Summary.pdf">Summary</a></li>
+</ul>
+<h3 id="non-parametric-statistics">Non-Parametric Statistics</h3>
+<ul>
+<li><a href="/static/cambridge/NonParametricStatistics-LectureNotes.pdf">Lecture Notes</a></li>
+<li><a href="/static/cambridge/NonParametricStatistics-Summary.pdf">Summary</a></li>
+</ul>
+<h3 id="percolation">Percolation</h3>
+<ul>
+<li><a href="/static/cambridge/Percolation-LectureNotes.pdf">Lecture Notes</a></li>
+</ul>
+<h3 id="ramsay-theory">Ramsay Theory</h3>
+<ul>
+<li><a href="/static/cambridge/RamsayTheory-LectureNotes.pdf">Lecture Notes</a></li>
+</ul>
+<h3 id="statistical-theory">Statistical Theory</h3>
+<ul>
+<li><a href="/static/cambridge/StatisticalTheory-LectureNotes.pdf">Lecture Notes</a></li>
+<li><a href="/static/cambridge/StatisticalTheory-Summary.pdf">Summary</a></li>
+</ul>
+<h3 id="time-series-and-monte-carlo-analysis">Time Series and Monte Carlo Analysis</h3>
+<ul>
+<li><a href="/static/cambridge/TimeSeriesMonteCarlo-LectureNotes.pdf">Lecture Notes</a></li>
+<li><a href="/static/cambridge/TimeSeriesMonteCarlo-Summary.pdf">Summary</a></li>
+</ul>
+</section></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/lasso-estimator/">The LASSO Estimator</a></h1><div class="post-meta"><p class="date">31 May 2014</p></div><div class="the-content"><section class="intro-content"><p>As far as I can tell, the LASSO estimator is the closest thing we have
+to a miracle in modern statistics.</p>
+<p>The LASSO estimator is defined as a solution to the minimization
+problem $\frac{1}{n} \| Y - X \theta \|_2^2 + \lambda \| \theta \|_1$
+over $\mathbb{R}^p$. The key insight here is that this is a convex
+problem in $\theta$ - this follows from both norms being convex and
+the sum of convex functions being convex.  This allows us to design
+efficient solvers for this problem and thus handle large-scale
+problems - see, for example, ADMM, iterative shrinkage, gradient
+projection, etc.</p>
+<p>The LASSO can be viewed as convex relaxation of a very natural problem
+in statistical estimation - finding the best $k$-sparse vector to
+minimize $\| Y - X \theta \| + \lambda \| \theta \|_0$, where the
+$L_0$ norm (indeed, not actually a norm) is to be interpreted as the
+number of non-zero coefficients in $\theta$. This comes from problems
+such as in signal processing and genomics array data where we have $p$
+(the number of covariates) significantly larger than $n$, the number of
+observations. In this case, the usual least-squares estimation theory
+dating back to Gauss does not apply ($X$ cannot have full rank), and
+we must find other alternatives. The brute-force approach is
+combinatorially hard (we must check each $p \choose k$ sets of
+supports, which takes time exponential in $p$).</p>
+<p>Thus, the LASSO objective can be seen as a natural convex relation of
+the original problem (e.g. taking $p$ from $0$ upwards and stopping as
+soon as $\| \theta \|_p$ is convex).</p>
+<p>The &quot;miracle&quot; I refer to is the amazing result of Candes &amp; Tao in a
+series of papers starting in 2005 that established that for a large
+class of observation matrices $X$, we have the amazing result that
+with very high probability, solving the LASSO problem is equivalent to
+solving the original combinatorially hard problem.  Formally, we have
+the following theorem, which contains a germ of the restricted
+isometry property.</p>
+<h3 id="the-optimality-of-the-lasso-estimator">The Optimality of the LASSO estimator</h3>
+<blockquote>
+<p>Let $\theta_0$ be $k$-sparse with support $S_0$, and let $Y = X
+\theta + \epsilon$, with $\epsilon \sim N(0, \sigma^2 I_n)$. Let
+$\tilde \theta$ be the LASSO estimator of $(Y, X)$ with parameter
+$\lambda = 4 \overline \sigma \sqrt{\frac{t^2 + 2 \log p}{n}}$.
+Assume that $\| \tilde \theta_{S_0} - \theta_0 \|_1^2 \leq k
+r_0 (\tilde \theta - \theta_0)^T \hat \Sigma (\tilde \theta -
+\theta_0)$ with probability at least $1 - \beta$ for some $r_0$.
+Then with probability at least $1 - \beta - e^{-\frac{t^2}{2}}$, we
+have that \begin{equation} \frac{1}{n} \| X(\tilde \theta -
+\theta_0) \|_2^2 + \lambda \| \tilde \theta - \theta_0 \| \leq 4
+k r_0 \lambda^2 \end{equation}</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>The proof is fairly elementary, requiring only a basic concentration
+of measure inequality for subgaussian random variables. The key step
+is recognizing that we can bound the event $\max_{j} \frac{2}{n} \|
+(\epsilon^T X)_j \| \geq \frac{\lambda}{2}$ on a set of measure less
+than $e^-\frac{t^2}{2}$. Once we have this result, we can apply the
+triangle inequality and the restricted isometry condition in the
+theorem to obtain the desired result.</p>
+</section></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/modern-emacs-setup/">A modern Emacs setup in OS X</a></h1><div class="post-meta"><p class="date">16 May 2014</p></div><div class="the-content"><section class="intro-content"><p>About a year ago I switched from Vim to Emacs, and I couldn&#39;t be
+happier about the move.  I spent some time getting a setup I was happy
+with, and thought I&#39;d share it for those who are also looking to move
+to Emacs.</p>
+<p>For more information, my entire <code>.emacs.d</code> is available in my
+<a href="https://github.com/ajtulloch/dots/tree/cellar-emacs">dots repository</a> on GitHub.</p>
+</section><p><a class="more" href="/articles/modern-emacs-setup/">Continue...</a></p></div><div class="meta clearfix"><ul class="post-categories"><li>emacs</li></ul></div></article><article class="post"><h1 class="title"><a href="/articles/boggle-solving-in-haskell/">A Parallel Boggle Solver in Haskell</a></h1><div class="post-meta"><p class="date">5 April 2014</p></div><div class="the-content"><section class="intro-content"><p>A cute interview question I&#39;ve had is &quot;given an $n \times n$ board of
+characters and a dictionary, find all possible words
+formed by a self-avoiding path in the grid&quot;.  This is otherwise known
+as &quot;Boggle&quot;.</p>
+<p>A simple solution is just conducting a graph traversal of the game board - for
+each of the $n^2$ positions, we conduct a DFS search starting at that
+position, tracking the previously visited positions at each stage.</p>
+<p>This is trivial to do in any language, but I thought it would be
+an interesting application of Simon Marlow&#39;s <code>Control.Monad.Parallel</code>
+Haskell library to conduct these traversals  in parallel.</p>
+<p>The full implementation is available on GitHub at
+<a href="https://github.com/ajtulloch/boggle">https://github.com/ajtulloch/boggle</a>.</p>
+</section><p><a class="more" href="/articles/boggle-solving-in-haskell/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/python-vs-julia/">Python vs Julia - an example from machine learning</a></h1><div class="post-meta"><p class="date">11 March 2014</p></div><div class="the-content"><section class="intro-content"><p>In <a href="http://tullo.ch/articles/speeding-up-isotonic-regression/">Speeding up isotonic regression in scikit-learn</a>,
+we dropped down into Cython to improve the performance of a regression
+algorithm. I thought it would be interesting to compare the
+performance of this (optimized) code in Python against the naive Julia
+implementation.</p>
+<p>This article continues on from <a href="http://tullo.ch/articles/speeding-up-isotonic-regression/">the previous one</a>, so
+it may be worth reading that before continuing here to obtain the necessary
+background information.</p>
+<p>We&#39;ll implement both of the algorithms for the previous article, and
+compare their performance in Julia against Python.</p>
+</section><p><a class="more" href="/articles/python-vs-julia/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/speeding-up-isotonic-regression/">Speeding up isotonic regression in scikit-learn by 5,000x</a></h1><div class="post-meta"><p class="date">9 March 2014</p></div><div class="the-content"><section class="intro-content"><p><a href="http://en.wikipedia.org/wiki/Isotonic_regression">Isotonic regression</a> is a useful non-parametric regression
+technique for fitting an increasing function to a given dataset.</p>
+<p>A classic use is in improving the calibration of a probabilistic
+classifier.  Say we have a set of 0/1 data-points (e.g. ad clicks), and
+we train a probabilistic classifier on this dataset.</p>
+<p>Unfortunately, we find that our classifier is poorly calibrated - for
+cases where it predicts ~50% probability of a click, there is actually
+a 20% probability of a click, and so on.</p>
+<p>In this case, we can learn an isotonic regression model on the output
+of the classifier, where our increasing function we fit is $\mathcal{P}(+ , | ,
+\text{classifiers prediction})$.  The constraint that the function is
+increasing means that the ordering of events is preserved by the
+transformation, which is an important constraint.</p>
+<p>With a trained isotonic regression model, our final output is the
+composition of the classifiers prediction with the isotonic regression
+function.</p>
+<p>For an example of this usage, see the Google
+<a href="http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/41159.pdf">Ad Click Prediction - A View from the Trenches</a>
+paper from KDD 2013, which covers this technique in section 7. The
+<a href="http://research.microsoft.com/pubs/122779/AdPredictor%20ICML%202010%20-%20final.pdf">AdPredictor ICML paper</a> paper also uses this technique
+for calibrating a Naive Bayes predictor.</p>
+<p>We&#39;ll now detail how we made the <a href="http://scikit-learn.org/"><code>scikit-learn</code></a>
+implementation of isotonic regression more than ~5,000x faster, while
+reducing the number of lines of code in the implementation.</p>
+</section><p><a class="more" href="/articles/speeding-up-isotonic-regression/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/stripe-ctf-golfing/">Stripe CTF Distributed Systems - Minimal Solutions</a></h1><div class="post-meta"><p class="date">28 January 2014</p></div><div class="the-content"><section class="intro-content"><p>The <a href="http://stripe-ctf.com">Stripe CTF</a> Distributed Systems edition has just finished, and
+I passed all the levels (and was one of the first fifty contestants to
+finish). In constructing my solutions, I thought it would be an
+interesting challenge to attempt to construct the minimal changes to
+the reference solutions that are sufficient to pass the scoring
+requirements.</p>
+<p>To be clear - these aren&#39;t high-quality (or high-scoring) solutions.
+I&#39;m not especially proud of these. They are just <em>small</em> solutions,
+and somewhat interesting for that reason.</p>
+</section><p><a class="more" href="/articles/stripe-ctf-golfing/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/decision-tree-evaluation/">The Performance of Decision Tree Evaluation Strategies</a></h1><div class="post-meta"><p class="date">2 December 2013</p></div><div class="the-content"><section class="intro-content"><p>UPDATE: Compiled evaluation is now implemented for
+<a href="http://scikit-learn.org">scikit-learn</a> regression tree/ensemble
+models, available at
+<a href="https://github.com/ajtulloch/sklearn-compiledtrees">https://github.com/ajtulloch/sklearn-compiledtrees</a> or <code>pip install
+sklearn-compiledtrees</code>.</p>
+<p><a href="http://tullo.ch/articles/speeding-up-decision-tree-training/">Our previous article</a> on decision trees dealt
+with techniques to speed up the training process, though often the
+performance-critical component of the machine learning pipeline is the
+prediction side. Training takes place offline, whereas predictions are
+often in the hot path - consider ranking documents in response to a
+user query <em>a-la</em> Google, Bing, etc. Many candidate documents need to
+be scored as quickly as possible, and the top <em>k</em> results returned to
+the user.</p>
+<p>Here, we&#39;ll focus on on a few methods to improve the performance of
+evaluating an ensemble of decision trees - encompassing random
+forests, gradient boosted decision trees, AdaBoost, etc.</p>
+<p>There are three methods we&#39;ll focus on here:</p>
+<ul>
+<li>Recursive tree walking (<em>naive</em>)</li>
+<li>Flattening the decision tree (<em>flattened</em>)</li>
+<li>Compiling the tree to machine code (<em>compiled</em>)</li>
+</ul>
+<p>We&#39;ll show that choosing the right strategy can improve evaluation
+time by more than 2x - which can be a very significant performance
+improvement indeed.</p>
+<p>All code (implementation, drivers, analysis scripts) are available on
+GitHub at the <a href="https://github.com/ajtulloch/decisiontree-performance">decisiontrees-performance</a> repository.</p>
+</section><p><a class="more" href="/articles/decision-tree-evaluation/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/online-learning-with-adpredictor/">Online Learning with Microsoft's AdPredictor algorithm</a></h1><div class="post-meta"><p class="date">30 November 2013</p></div><div class="the-content"><section class="intro-content"><p>Online learning (as opposed to more traditional batched machine
+learning) is more and more commonly applied to training machine
+learned models at scale. The chief advantage is that the model is
+trained via a streaming approach, and thus the entire dataset used
+when training does not need to be held in memory at any given time.</p>
+<p>That is to say, we can consider that a model parameters have a current
+state $\mathbf{w}$, and we observe our examples $(y, \mathbf{x})$ with
+($y$ the label and $x$ the features of the given example) in a
+streaming fashion. At each example, we update our weights from the
+given example, and these weights are used as a starting point.</p>
+<p>Microsoft&#39;s <a href="http://research.microsoft.com/pubs/122779/adpredictor%20icml%202010%20-%20final.pdf">AdPredictor</a> model from ICML 2010 is an online learning
+model that has been successfully applied in the context of click
+prediction for online advertising.</p>
+<p>Here, we&#39;ll implement the AdPredictor algorithm (in Python), and
+demonstrate how online learning works via visualizations of the
+trained parameters $\mathbf{w}$.</p>
+</section><p><a class="more" href="/articles/online-learning-with-adpredictor/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/svm-py/">A basic soft-margin kernel SVM implementation in Python</a></h1><div class="post-meta"><p class="date">26 November 2013</p></div><div class="the-content"><section class="intro-content"><p><a href="http://en.wikipedia.org/wiki/Support_vector_machine">Support Vector Machines</a> (SVMs) are a family of nice supervised learning
+algorithms that can train classification and regression models
+efficiently and with very good performance in practice.</p>
+<p>SVMs are also rooted in convex optimization and Hilbert space theory,
+and there is a lot of beautiful mathematics in the derivation of
+various aspects of the training algorithm, which we will go into in
+subsequent posts.</p>
+<p>For now, we&#39;ll just give an introduction to the basic theory of
+soft-margin kernel SVMs. The classical treatment is to start with
+hard-margin linear SVMs, then introduce the kernel trick and the
+soft-margin formulation, so this is somewhat faster-moving than other
+presentations.</p>
+</section><p><a class="more" href="/articles/svm-py/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/consistency-of-m-estimators/">Consistency of M-estimators</a></h1><div class="post-meta"><p class="date">3 November 2013</p></div><div class="the-content"><section class="intro-content"><p>Let $\Theta \subseteq \mathbb{R}^{p}$ be compact. Let $Q: \Theta \rightarrow
+\mathbb{R}$ be a continuous, non-random function that has a unique minimizer
+$\theta_{0} \in \Theta$.</p>
+<p>Let $Q_{n}: \Theta \rightarrow \mathbb{R}$ be any sequence of random
+functions such that</p>
+<p>\begin{equation}
+  \sup_{\theta \in \Theta} |Q_{n}(\theta) - Q(\theta)| \rightarrow 0
+\end{equation}
+as $n \rightarrow \infty$.</p>
+<p>If $\theta_{n}$ is <em>any</em> sequence of minimizers of $Q_{n}$,
+then $\hat \theta_{n} \rightarrow \theta_{0}$ in probability as $n \rightarrow \infty$.</p>
+</section></div><div class="meta clearfix"><ul class="post-categories"><li>statistics</li></ul></div></article><article class="post"><h1 class="title"><a href="/articles/speeding-up-decision-tree-training/">Speeding up Decision Tree Training</a></h1><div class="post-meta"><p class="date">3 November 2013</p></div><div class="the-content"><section class="intro-content"><p>The classic algorithm for training a decision tree for
+classification/regression problems (CART) is well known. The
+underlying algorithm acts by recursively partitioning the dataset into
+subsets that maximize the &#39;clustering&#39; of examples in each of the
+partitioned subsets, where the metric used for clustering varies
+depending on the problem (for example, information gain, Gini loss,
+etc, have been used successfully in the literature).</p>
+<p>For a high level overview of the algorithm, see the following snippet
+of <a href="https://github.com/ajtulloch/haskell-ml/blob/master/MachineLearning/DecisionTrees.hs">Haskell code</a> code from the <a href="https://github.com/ajtulloch/haskell-ml/">haskell-ml project</a> project.</p>
+</section><p><a class="more" href="/articles/speeding-up-decision-tree-training/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/the-ito-isometry/">The Ito isometry</a></h1><div class="post-meta"><p class="date">3 November 2013</p></div><div class="the-content"><section class="intro-content"><p>The <em>Itō isometry</em> is a useful theorem in stochastic calculus that
+provides a fundamental tool in computing stochastic integrals -
+integrals with respect to a Brownian motion \begin{equation}
+\int_{0}^{\infty} f(s) dB_{s} \end{equation} with $B_{s}$ a
+Brownian motion.</p>
+<p>First, we&#39;ll define a predictable process.</p>
+<p></section><p><a class="more" href="/articles/the-ito-isometry/">Continue...</a></p></div><div class="meta clearfix"><ul class="post-categories"><li>statistics</li><li> mathematics</li></ul></div></article><article class="post"><h1 class="title"><a href="/articles/haskell-search/">Purely Functional Tree Search in Haskell</a></h1><div class="post-meta"><p class="date">1 November 2013</p></div><div class="the-content"><section class="intro-content"><p>Haskell is an absolute pleasure to write code in, and I&#39;ve been trying to use it more and more. It&#39;s a language that rewards extended effort in a way that <code>C++</code> et. al. do not.</p>
+<p>Consider the following program, illustrating a basic BFS/DFS search through a tree in Haskell.  It illustrates a number of useful concepts - <a href="http://www.haskell.org/haskellwiki/Algebraic_data_type">algebraic data types</a>, <a href="https://en.wikipedia.org/wiki/Type_class">type classes</a>, and <a href="http://en.wikipedia.org/wiki/QuickCheck">QuickCheck</a>.</p>
+<p></section><p><a class="more" href="/articles/haskell-search/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/gradient-boosted-decision-trees-primer/">A Primer on Gradient Boosted Decision Trees</a></h1><div class="post-meta"><p class="date">11 March 2013</p></div><div class="the-content"><section class="intro-content"><p>Gradient boosted decision trees are an effective off-the-shelf method
+for generating effective models for classification and regression
+tasks.</p>
+<p>Gradient boosting is a generic technique that can be applied to
+arbitrary &#39;underlying&#39; weak learners - typically decision trees are
+used. The seminal reference is <a href="https://en.wikipedia.org/wiki/Jerome_H._Friedman">Friedman&#39;s</a> <a href="http://statweb.stanford.edu/~jhf/ftp/trebst.pdf">2001 paper</a> that
+introduced the method.</p>
+<p>Consider a typical supervised learning problem - we are given as input
+labeled feature vectors $(x, y)$, and seek to estimate a function
+$\hat F(x)$ that approximates the &#39;true&#39; mapping $F^\star$, with
+$F^\star$ minimizing the expected loss $L(y, F(x)$ over some candidate
+functions $\mathcal{F}$ for a loss function $L$.</p>
+</section><p><a class="more" href="/articles/gradient-boosted-decision-trees-primer/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/sydney-mathematics-notes/">University of Sydney Mathematics Notes</a></h1><div class="post-meta"><p class="date">11 November 2012</p></div><div class="the-content"><section class="intro-content"><p>This is a compilation of various sets of lecture notes I created
+during my Bachelors degree in Mathematics at the University of Sydney.
+All <code>.tex</code> files are available at the
+<a href="https://github.com/ajtulloch/SydneyUniversityMathematicsNotes">GitHub repository</a>.</p>
+<p></section><p><a class="more" href="/articles/sydney-mathematics-notes/">Continue...</a></p></div><div class="meta clearfix"></div></article><article class="post"><h1 class="title"><a href="/articles/elements-of-statistical-learning/">Elements of Statistical Learning - Chapter 2 Solutions</a></h1><div class="post-meta"><p class="date">1 November 2012</p></div><div class="the-content"><section class="intro-content"><p>The Stanford textbook <a href="http://statweb.stanford.edu/~tibs/ElemStatLearn/">Elements of Statistical Learning</a> by
+<a href="http://www.stanford.edu/~hastie/">Hastie</a>, <a href="http://statweb.stanford.edu/~tibs/">Tibshirani</a>, and <a href="http://statweb.stanford.edu/~jhf/">Friedman</a>
+is an excellent (and <a href="http://www.stanford.edu/~hastie/local.ftp/Springer/ESLII_print5.pdf">freely available</a>) graduate-level
+text in data mining and machine learning. I&#39;m currently working
+through it, and I&#39;m putting my (partial) exercise solutions up for
+anyone who might find them useful. The first set of solutions is for
+Chapter 2, <em>An Overview of Supervised Learning</em>, introducing least
+squares and <em>k</em>-nearest-neighbour techniques.</p>
+<h3 id="exercise-solutions">Exercise Solutions</h3>
+<p>See the solutions in <a href="/static/ESL-Solutions.pdf">PDF</a> format (<a href="/static/ESL-Chap2Solutions.tex">source</a>) for
+a more pleasant reading experience. This webpage was created from the
+LaTeX source using the <a href="/projects/LaTeX2Markdown/">LaTeX2Markdown</a>
+utility - check it out on
+<a href="https://github.com/ajtulloch/LaTeX2Markdown">GitHub</a>.</p>
+</section><p><a class="more" href="/articles/elements-of-statistical-learning/">Continue...</a></p></div><div class="meta clearfix"></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

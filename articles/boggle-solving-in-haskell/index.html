@@ -1,0 +1,95 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>A Parallel Boggle Solver in Haskell &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/boggle-solving-in-haskell/">A Parallel Boggle Solver in Haskell</a></h1><div class="post-meta"><p class="date">5 April 2014</p></div><div class="the-content"><section class="content"><p>A cute interview question I&#39;ve had is &quot;given an $n \times n$ board of
+characters and a dictionary, find all possible words
+formed by a self-avoiding path in the grid&quot;.  This is otherwise known
+as &quot;Boggle&quot;.</p>
+<p>A simple solution is just conducting a graph traversal of the game board - for
+each of the $n^2$ positions, we conduct a DFS search starting at that
+position, tracking the previously visited positions at each stage.</p>
+<p>This is trivial to do in any language, but I thought it would be
+an interesting application of Simon Marlow&#39;s <code>Control.Monad.Parallel</code>
+Haskell library to conduct these traversals  in parallel.</p>
+<p>The full implementation is available on GitHub at
+<a href="https://github.com/ajtulloch/boggle">https://github.com/ajtulloch/boggle</a>.</p>
+<h2 id="types">Types</h2>
+<script src="https://gist.github.com/ajtulloch/9993421.js"></script>
+
+<h2 id="solver">Solver</h2>
+<script src="https://gist.github.com/ajtulloch/9993420.js"></script>
+
+<h2 id="analysis">Analysis</h2>
+<p>The key line (indeed, the only line relevant to parallelism) is</p>
+<pre><code class="language-hs"><span class="comment">-- construct candidate words in parallel</span>
+<span class="title">parallelExpand</span> = concat . parMap rdeepseq expand</code></pre>
+<p>which (in parallel) expands our current node in the DFS graph, and
+concatenates the results together.  Note how trivial it is in a
+pure functional language to parallelize a function - compare this to
+the equivalent snippet in Python, C++, etc.</p>
+<p>Note the type signatures</p>
+<pre><code>*Main&gt; :t parMap rdeepseq
+parMap rdeepseq :: NFData b =&gt; (a -&gt; b) -&gt; [a] -&gt; [b]
+*Main&gt; :t map
+map :: (a -&gt; b) -&gt; [a] -&gt; [b]</code></pre><p>which indicate that <code>parMap rdeepseq</code> is a drop-in replacement for an
+existing <code>map</code>.</p>
+<p>Go is slightly nicer than most, for example:</p>
+<pre><code class="language-go">results := <span class="built_in">make</span>(<span class="keyword">chan</span> []<span class="keyword">int</span>, <span class="built_in">len</span>(jobs))
+
+<span class="keyword">for</span> _, job := <span class="keyword">range</span> jobs {
+    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(job Job)</span></span> {
+        results &lt;- run(job)
+    }(job)
+}
+
+combined := <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">0</span>)
+<span class="keyword">for</span> _, _ = <span class="keyword">range</span> jobs {
+    <span class="keyword">for</span> _, p := <span class="keyword">range</span> &lt;-results {
+        combined = <span class="built_in">append</span>(combined, p)
+    }
+}</code></pre>
+<p>although even this pales in comparison to Haskell&#39;s elegance here.</p>
+<h2 id="performance">Performance</h2>
+<p>Using GHC runtime system flags, we can control the number of OS
+threads used by the runtime, which allows us to control the degree of
+parallelism (and hence the amount of speedup from the parallelism)</p>
+<p>First, the serial case:</p>
+<pre><code class="language-bash">∴ time dist/build/boggle/boggle 4 +RTS -N1 -H1G -RTS &gt; /dev/null
+dist/build/boggle/boggle 4 +RTS -N1 -H1G -RTS &gt; /dev/null  41.12s user
+0.50s system 99% cpu 41.652 total</code></pre>
+<pre><code class="language-bash">∴ time dist/build/boggle/boggle 4 +RTS -N8 -H1G -RTS &gt; /dev/null
+dist/build/boggle/boggle 4 +RTS -N8 -H1G -RTS &gt; /dev/null  63.89s user
+1.64s system 744% cpu 8.801 total</code></pre>
+<p>We see approximately <strong>5x</strong> speedup from executing in parallel across
+8 cores (42 seconds to 9 seconds), which indicates our parallelism is
+effective here.</p>
+<h2 id="more-information">More Information</h2>
+<p>Of course, it&#39;s also possible to improve the performance in the
+single-threaded case - use a trie for efficiently eliminating large
+swathes of the graph by eliminating partial solutions for whom no word
+with the given prefix exists in the dictionary, etc.  A hash trie can
+determine this in $\mathcal{O}(|q|)$, where $|q|$ is the length of the
+prefix up to the given point.</p>
+<p><a href="https://news.ycombinator.com/item?id=7540479">Discuss this on Hacker News</a>.</p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

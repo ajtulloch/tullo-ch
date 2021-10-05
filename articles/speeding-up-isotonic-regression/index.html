@@ -1,0 +1,141 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>Speeding up isotonic regression in scikit-learn by 5,000x &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/speeding-up-isotonic-regression/">Speeding up isotonic regression in scikit-learn by 5,000x</a></h1><div class="post-meta"><p class="date">9 March 2014</p></div><div class="the-content"><section class="content"><p><a href="http://en.wikipedia.org/wiki/Isotonic_regression">Isotonic regression</a> is a useful non-parametric regression
+technique for fitting an increasing function to a given dataset.</p>
+<p>A classic use is in improving the calibration of a probabilistic
+classifier.  Say we have a set of 0/1 data-points (e.g. ad clicks), and
+we train a probabilistic classifier on this dataset.</p>
+<p>Unfortunately, we find that our classifier is poorly calibrated - for
+cases where it predicts ~50% probability of a click, there is actually
+a 20% probability of a click, and so on.</p>
+<p>In this case, we can learn an isotonic regression model on the output
+of the classifier, where our increasing function we fit is $\mathcal{P}(+ , | ,
+\text{classifiers prediction})$.  The constraint that the function is
+increasing means that the ordering of events is preserved by the
+transformation, which is an important constraint.</p>
+<p>With a trained isotonic regression model, our final output is the
+composition of the classifiers prediction with the isotonic regression
+function.</p>
+<p>For an example of this usage, see the Google
+<a href="http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/41159.pdf">Ad Click Prediction - A View from the Trenches</a>
+paper from KDD 2013, which covers this technique in section 7. The
+<a href="http://research.microsoft.com/pubs/122779/AdPredictor%20ICML%202010%20-%20final.pdf">AdPredictor ICML paper</a> paper also uses this technique
+for calibrating a Naive Bayes predictor.</p>
+<p>We&#39;ll now detail how we made the <a href="http://scikit-learn.org/"><code>scikit-learn</code></a>
+implementation of isotonic regression more than ~5,000x faster, while
+reducing the number of lines of code in the implementation.</p>
+<h2 id="the-pooled-adjacent-violators-algorithm">The Pooled Adjacent Violators Algorithm</h2>
+<p>The pooled adjacent violators algorithm (PAVA) is a useful algorithm
+for fitting weighted isotonic regressions to data.</p>
+<p>PAVA is a linear-time algorithm for fitting an isotonic regression
+model. There is a nice visualization and explanation at
+<a href="http://fa.bianp.net/blog/2013/isotonic-regression/">Fabian Pedregosa&#39;s blog</a>.</p>
+<blockquote>
+<p>The algorithm sweeps through the data looking for violations of the
+monotonicity constraint. When it finds one, it adjusts the estimate to
+the best possible fit with constraints. Sometimes it also needs to
+modify previous points to make sure the new estimate does not violate
+the constraints.</p>
+</blockquote>
+<p>See <a href="http://www.jstatsoft.org/v32/i05/paper">Isotone Optimization in R</a> for a more
+formal introduction to PAVA and active set methods for isotone regression.</p>
+<h2 id="speeding-up-isotonic-regression">Speeding up Isotonic Regression</h2>
+<p>I wrote the current scikit-learn implementation after seeing the
+previous implementation was much slower than equivalent
+implementations in R, etc.</p>
+<p>The original algorithm used the active set, which is in some sense
+mathematically dual to PAVA, and seemed to scale quite slowly
+(approximately $\mathcal{O}(N^2)$). This is despite being implemented
+in Cython, which compiles Python-like code to C, and is generally very
+fast. After some profiling, it turned out this slowness was due to the
+$\mathcal{O}(N)$ list pop in the inner loop (lines 29 and 39 of the
+below gist)</p>
+<script src="https://gist.github.com/ajtulloch/9447845.js"></script>
+
+<p>Additionally, the implementation was not amenable to efficient machine
+code generation, given the large number of calls to the native Python
+in the generated Cython code.  In the below image, white lines are
+essentially translated to C, while yellow lines call into the Python
+API, and are thus much more expensive.</p>
+<p><img src="https://f.cloud.github.com/assets/1121581/2368135/c715541e-a797-11e3-818e-286982071d96.png" alt=""></p>
+<p>Additionally, the algorithm allocates a significant amount of memory,
+due to maintaining and updating the auxiliary data structure
+<code>active_sets</code>.</p>
+<p>Thus, it seemed promising to seek to improve the performance of this
+code. Profiling (using <code>Instruments.app</code> on OS X) indicated that the
+heavy memory allocation and the list <code>pop</code> were the key causes of
+slowdown, so an efficient Cython implementation of PAVA seemed a
+natural choice.  PAVA can be implemented entirely in-place (so no
+additionally memory allocations are needed) and does not require any
+operations beyond indexing into arrays, so can be efficiently compiled
+by Cython.</p>
+<p>Once a simple benchmarking script had been written (to quickly
+validate performance improvements), we set about implementing PAVA.
+The PAVA implementation is gisted below.</p>
+<script src="https://gist.github.com/ajtulloch/9447957.js"></script>
+
+<p>A few interesting aspects of this approach:</p>
+<ol>
+<li>No memory allocations are made - mutations are made in-place to the
+<code>solution</code> vector.</li>
+<li>The algorithm is essentially pure C with a Python syntax - the type
+information available to the compiler means that the generated code is
+as efficient as a pure C implementation.</li>
+<li>This algorithm is essential $\mathcal{O}(N^2)$ - we don&#39;t use the
+optimization of collapsing subsequences into a single point, which is
+required to achieve $\mathcal{O}(N)$ asymptotics.  Experiments
+indicated this optimization didn&#39;t improve performance.</li>
+</ol>
+<p>The output of <code>cython --annotate</code> indicates that we have effectively
+eliminated all Python API calls, and are being translated into
+straightforward C.</p>
+<p><img src="https://f.cloud.github.com/assets/1121581/2368157/97ba2770-a798-11e3-8bbb-9693a0f62ffa.png" alt=""></p>
+<h2 id="performance">Performance</h2>
+<p>Benchmark results indicate the simple PAVA algorithm performs much
+faster - <strong>approximately 5,000x faster with 1,000,000 data-points,
+approximately 500x faster with 100,000 data-points, and 14x faster with
+1,000 data-points</strong>.</p>
+<p>On a log-log scale, the performance improvements are visualized below
+for two separate datasets - a randomly perturbed version of $\log(1 +
+x)$, and a simulated univariate logistic regression dataset.</p>
+<p><img src="https://f.cloud.github.com/assets/1121581/2368112/bb6135a8-a796-11e3-8168-727abed7ec24.png" alt="">
+<img src="https://f.cloud.github.com/assets/1121581/2368113/bb7482f2-a796-11e3-8b3d-aeafa802a717.png" alt=""></p>
+<h2 id="the-importance-of-being-typed">The Importance of Being Typed</h2>
+<p>It is also instructive to examine the effect that Cython type
+information has on the performance of the PAVA implementation.
+Stripping the <code>cdef</code> block yields the following comparative
+performance:</p>
+<p><img src="https://f.cloud.github.com/assets/1121581/2368114/bb76e7f4-a796-11e3-8adf-ed59295b4026.png" alt=""></p>
+<p>Thus, stripping out the type annotations can makes the same Cython algorithm
+<strong>~100x-500x slower</strong>.</p>
+<p>There&#39;s a lesson here in the importance of constant factors when doing
+performance-critical work - and another one on understanding all
+stages of your tool-chain.</p>
+<p>A ~100x-500x performance hit from not adding type information is
+incredibly high, and is both a reflection of the speed of
+straight-line C code, and the cost of falling back to the Python interpreter.</p>
+<h2 id="more-information">More Information</h2>
+<p>See the <a href="https://github.com/scikit-learn/scikit-learn/pull/2944">GitHub pull request</a> for more information and discussion.</p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

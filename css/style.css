@@ -1,0 +1,545 @@
+@import url(https://fonts.googleapis.com/css?family=Arvo:400,700);
+/*
+Theme Name: Less
+Theme URI: http://lessmade.com/themes/less
+Author: Jared Erickson
+Author URI: http://jarederickson.com
+Description: A super simple theme that can be customized using LESS variables
+Version: 1.1
+License: GNU General Public License
+
+*/
+/* LESS variables - Change the look of your site simply.
+-------------------------------------------------------------- */
+/* Reset
+-------------------------------------------------------------- */
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  vertical-align: baseline;
+  font: inherit;
+  font-size: 100%;
+}
+/* HTML5 display-role reset for older browsers */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+html {
+  margin: 0;
+  padding: 0;
+  font-size: 62.5%;
+  /* Corrects text resizing oddly in IE6/7 when body font-size is set using em units http://clagnut.com/blog/348/#c790 */
+  -webkit-text-size-adjust: 100%;
+  /* Prevents iOS text size adjust after orientation change, without disabling user zoom */
+  -ms-text-size-adjust: 100%;
+  /* www.456bereastreet.com/archive/201012/controlling_text_size_in_safari_for_ios_without_disabling_user_zoom/ */
+}
+ol,
+ul {
+  list-style: none;
+}
+blockquote,
+q {
+  quotes: none;
+}
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+code,
+kbd,
+tt,
+var {
+  font: 15px Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+}
+abbr,
+acronym {
+  border-bottom: 1px dotted #666;
+  cursor: help;
+}
+mark,
+ins {
+  background: #fff9c0;
+  text-decoration: none;
+}
+sup,
+sub {
+  font-size: 75%;
+  height: 0;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+sup {
+  bottom: 1ex;
+}
+sub {
+  top: .5ex;
+}
+small {
+  font-size: 75%;
+}
+big {
+  font-size: 125%;
+}
+figure {
+  margin: 0;
+}
+table {
+  margin: 0 0 1.5em;
+  width: 100%;
+}
+th {
+  font-weight: bold;
+}
+/* styles
+-------------------------------------------------------------- */
+body,
+button,
+input,
+select {
+  padding: 0;
+  margin: 0;
+  background: #ffffff;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 26.64px;
+  font-size: 18px;
+  font-size: 1.8rem;
+}
+/* typography
+-------------------------------------------------------------- */
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  clear: both;
+  font-family: "Arvo", Georgia, serif;
+}
+h1 {
+  line-height: 71.04px;
+  font-size: 48px;
+  font-size: 4.8rem;
+}
+h2 {
+  line-height: 50.32px;
+  font-size: 34px;
+  font-size: 3.4rem;
+}
+h3 {
+  line-height: 41.44px;
+  font-size: 28px;
+  font-size: 2.8rem;
+}
+h4 {
+  line-height: 26.64px;
+  font-size: 18px;
+  font-size: 1.8rem;
+}
+hr {
+  background-color: #ccc;
+  border: 0;
+  height: 1px;
+  margin-bottom: 1.5em;
+}
+/* Text elements */
+p {
+  margin-bottom: 1.5em;
+}
+ul,
+ol {
+  margin: 0 0 1.5em 3em;
+}
+ul {
+  list-style: disc;
+}
+ol {
+  list-style: decimal;
+}
+ul ul,
+ol ol,
+ul ol,
+ol ul {
+  margin-bottom: 0;
+  margin-left: 1.5em;
+}
+dt {
+  font-weight: bold;
+}
+dd {
+  margin: 0 1.5em 1.5em;
+}
+b,
+strong {
+  font-weight: bold;
+}
+dfn,
+cite,
+em,
+i {
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 1.5em;
+  padding: 1em;
+  border-left: 1px solid #dddddd;
+}
+blockquote p {
+  margin-bottom: 0px;
+}
+address {
+  margin: 0 0 1.5em;
+}
+pre {
+  background: #eee;
+  font-family: Consolas, "Courier 10 Pitch", Courier, monospace;
+  font-size: 15px;
+  font-size: 1.5rem;
+  line-height: 1.6;
+  margin-bottom: 1.6em;
+  padding: 1.6em;
+  overflow: auto;
+  max-width: 100%;
+}
+.gist-file {
+  font-size: 15px;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+/* Links */
+a {
+  color: #007998;
+  -webkit-transition: color 0.25s ease-in-out;
+  -moz-transition: color 0.25s ease-in-out;
+  -o-transition: color 0.25s ease-in-out;
+  -ms-transition: color 0.25s ease-in-out;
+  transition: color 0.25s ease-in-out;
+  text-decoration: none;
+}
+a:hover,
+a:focus,
+a:active {
+  color: rgba(0, 121, 152, 0.5);
+}
+/* Alignment */
+.alignleft {
+  display: inline;
+  float: left;
+  margin-right: 1.5em;
+}
+.alignright {
+  display: inline;
+  float: right;
+  margin-left: 1.5em;
+}
+.aligncenter {
+  clear: both;
+  display: block;
+  margin: 0 auto;
+}
+/* Header
+   -------------------------------------------------------------- */
+header {
+  padding: 20px 0;
+  background: transparent;
+  margin: 20px auto;
+}
+header .gravatar {
+  overflow: hidden;
+  width: 100px;
+  height: 100px;
+  -moz-border-radius: 50%;
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
+  margin: 0;
+  float: right;
+}
+header #brand {
+  float: left;
+  width: 80%;
+  margin-top: 22px;
+}
+header #brand h1 {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 900;
+  color: #565656;
+  line-height: 29.6px;
+  font-size: 20px;
+  font-size: 2rem;
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+}
+header #brand h1 a {
+  color: #565656;
+  text-decoration: none;
+}
+header #brand h1 a:hover {
+  color: rgba(0, 121, 152, 0.5);
+}
+header #brand h1 span {
+  font-weight: 200;
+  color: #888888;
+  text-transform: none;
+}
+header .spacing {
+  clear: both;
+}
+header nav {
+  float: left;
+  color: #565656;
+  line-height: 23.68px;
+  font-size: 16px;
+  font-size: 1.6rem;
+}
+header nav a {
+  color: #888888;
+}
+.container {
+  max-width: 720px;
+  padding: 20px;
+  margin: 0 auto;
+  position: relative;
+}
+/* Posts/Articles
+   -------------------------------------------------------------- */
+article {
+  background: transparent;
+  padding: 0;
+  margin-bottom: 80px;
+  border-bottom: 1px solid #dddddd;
+}
+article .title {
+  color: #404040;
+  line-height: 56.24px;
+  font-size: 38px;
+  font-size: 3.8rem;
+  font-weight: 700;
+}
+article .title a {
+  text-decoration: none;
+  color: #404040;
+}
+article .title a:hover {
+  color: #007998;
+}
+article .post-meta {
+  margin-bottom: 40px;
+  font-size: 14px;
+}
+article .post-meta p {
+  color: #888888;
+  text-decoration: none;
+}
+article .post-meta a {
+  color: #888888;
+  text-decoration: none;
+}
+article .post-meta a:hover {
+  color: rgba(136, 136, 136, 0.5);
+}
+article .the-content a {
+  font-weight: 900;
+  text-decoration: none;
+}
+article .the-content p,
+article .the-content ul,
+article .the-content ol {
+  color: #787878;
+}
+article .the-content img {
+  width: 100%;
+  height: auto;
+}
+article .meta {
+  line-height: 14.8px;
+  font-size: 10px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: .9px;
+}
+article .meta div {
+  float: left;
+}
+article .meta .post-categories {
+  list-style: none;
+  margin: 0 0 10px 0;
+}
+article .meta .post-categories li {
+  display: inline-block;
+  margin-right: 10px;
+}
+/* Page loop styling */
+.page article {
+  border-bottom: none;
+}
+.page article .title {
+  margin-bottom: 40px;
+}
+/* Comments */
+footer {
+  text-align: center;
+  padding-bottom: 40px;
+  font-size: 12px;
+}
+/* Misc & mixens
+   -------------------------------------------------------------- */
+/* Jetpack Gallery */
+.gallery .gallery-item {
+  margin-top: 0 !important;
+}
+.gallery img {
+  border: none !important;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.clear {
+  clear: both;
+}
+/* clear floats */
+.clearfix:after {
+  content: ".";
+  display: block;
+  clear: both;
+  visibility: hidden;
+  line-height: 0;
+  height: 0;
+}
+.clearfix {
+  display: inline-block;
+}
+html[xmlns] .clearfix {
+  display: block;
+}
+* html .clearfix {
+  height: 1%;
+}
+/* Media Queries for responsivenessssssss
+   -------------------------------------------------------------- */
+@media (max-width: 767px) {
+  header {
+    padding: 0;
+  }
+  header .gravatar {
+    float: none;
+    clear: both;
+    display: block;
+    margin: 0 auto;
+  }
+  header #brand {
+    float: none;
+  }
+  header nav {
+    float: none;
+  }
+  header hgroup {
+    width: 100%;
+  }
+}

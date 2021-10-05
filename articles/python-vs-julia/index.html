@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>Python vs Julia - an example from machine learning &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/python-vs-julia/">Python vs Julia - an example from machine learning</a></h1><div class="post-meta"><p class="date">11 March 2014</p></div><div class="the-content"><section class="content"><p>In <a href="http://tullo.ch/articles/speeding-up-isotonic-regression/">Speeding up isotonic regression in scikit-learn</a>,
+we dropped down into Cython to improve the performance of a regression
+algorithm. I thought it would be interesting to compare the
+performance of this (optimized) code in Python against the naive Julia
+implementation.</p>
+<p>This article continues on from <a href="http://tullo.ch/articles/speeding-up-isotonic-regression/">the previous one</a>, so
+it may be worth reading that before continuing here to obtain the necessary
+background information.</p>
+<p>We&#39;ll implement both of the algorithms for the previous article, and
+compare their performance in Julia against Python.</p>
+<h2 id="linear-pava">Linear PAVA</h2>
+<p>The Cython code is available on GitHub at <a href="https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/_isotonic.pyx"><code>scikit-learn</code></a>,
+and the Julia code is available on GitHub at <a href="https://github.com/ajtulloch/Isotonic.jl">Isotonic.jl</a></p>
+<p>The Julia implementation is straightforward implementation of PAVA,
+without any bells and whistles. The <code>@inbounds</code> macro was used to
+compare fairly with the Cython implementation, which turns off bounds
+checking as well.</p>
+<script src="https://gist.github.com/ajtulloch/9484357.js"></script>
+<script src="https://gist.github.com/ajtulloch/9485644.js"></script>
+
+<h2 id="active-set">Active Set</h2>
+<p>The active set implementation is approximately the same number of
+lines as the Cython implementation, and is perhaps more cleanly
+structured (via an explicit composite type <code>ActiveState</code>) that
+maintains a given active dual variable&#39;s parameters. It is also
+trivial to break repeated code into separated functions that
+can be trivially inlined by LLVM, while this is difficult for
+arbitrary arguments in Cython.</p>
+<p>One-based indexing in Julia also made the algorithm somewhat cleaner.</p>
+<script src="https://gist.github.com/ajtulloch/9484368.js"></script>
+<script src="https://gist.github.com/ajtulloch/9485601.js"></script>
+
+<h2 id="performance">Performance</h2>
+<p>We see that exactly the same algorithm in Julia is uniformly faster
+when compared to an equivalent Cython implementation.</p>
+<p><img src="https://f.cloud.github.com/assets/1121581/2385599/d0ad76c6-a91f-11e3-84a1-3b2965ba5ea0.png" alt=""></p>
+<p>For the active set implementations, Julia is anywhere between <strong>5x and
+300x faster</strong> on equivalent regression problems.</p>
+<p>For the linear PAVA implementation, Julia is between <strong>1.1x and 4x
+faster</strong>.</p>
+<p>This certainly indicates Julia is a very attractive choice for
+performance-critical machine learning applications.</p>
+<p>See the <a href="http://nbviewer.ipython.org/url/gist.githubusercontent.com/ajtulloch/9485996/raw/94b3d0e6bd67256f1f02eebb1463365dbc8b64fc/Julia.ipynb">iJulia notebook</a> for more information on how these
+performance measurements were obtained.</p>
+<p><a href="https://news.ycombinator.com/item?id=7383121">Discuss this article on HackerNews.</a></p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

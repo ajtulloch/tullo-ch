@@ -1,0 +1,167 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>Speeding up Decision Tree Training &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/speeding-up-decision-tree-training/">Speeding up Decision Tree Training</a></h1><div class="post-meta"><p class="date">3 November 2013</p></div><div class="the-content"><section class="content"><p>The classic algorithm for training a decision tree for
+classification/regression problems (CART) is well known. The
+underlying algorithm acts by recursively partitioning the dataset into
+subsets that maximize the &#39;clustering&#39; of examples in each of the
+partitioned subsets, where the metric used for clustering varies
+depending on the problem (for example, information gain, Gini loss,
+etc, have been used successfully in the literature).</p>
+<p>For a high level overview of the algorithm, see the following snippet
+of <a href="https://github.com/ajtulloch/haskell-ml/blob/master/MachineLearning/DecisionTrees.hs">Haskell code</a> code from the <a href="https://github.com/ajtulloch/haskell-ml/">haskell-ml project</a> project.</p>
+<span class="more"/>
+
+<script src="https://gist.github.com/ajtulloch/7295132.js"></script>
+
+<p>This is the simplest possible implementation - for each possible
+feature, we sort the (label, feature) pairs and compute the optimal
+splitting point for each feature, according to our decision metric. We
+then take the &#39;best&#39; possible split, split the examples by that point,
+record that we split the current node at the given feature and value,
+and recur down the left and right sides.</p>
+<p>The inner loop of the algorithm (in Python) is as follows (function
+<code>get_best_split</code>):</p>
+<script src="https://gist.github.com/ajtulloch/7295006.js"></script>
+
+<p>The complexity of this naive implementation is $\mathcal{O}(F \cdot
+E^3 \log E)$ - where $F$ are the number of features and $E$ is the
+number of examples. This is because we loop over the features $(|F|)$,
+sort the examples ($\mathcal{O}(E \log E)$) then over each example
+($|E|$), and computing the loss from partitioning at the given example
+takes $\mathcal{O}(E)$ time.</p>
+<p>It is important to note that this can be incredibly slow (consider
+when we have $\mathcal{O}(10^4)$ features and $\mathcal{O}(10^{10})$
+examples). There are several well-known ways we can speed this up.</p>
+<h2 id="speeding-up-decision-tree-training">Speeding up decision tree training</h2>
+<p>There are several ways we can make this process faster.</p>
+<ul>
+<li>Incrementally updating the gain at a given split instead of
+recomputing the update.</li>
+<li>Parallelizing recursive tree construction steps.</li>
+<li>For gradient boosting, we can trim low-importance samples
+(<em>influence trimming</em>), or just consider only a subset (<em>stochastic
+gradient boosting</em>).</li>
+<li>Considering only a random subset of features and examples at each
+iteration - as in <em>random forests</em>.</li>
+</ul>
+<p>We&#39;ll go through these in turn, with code examples from the
+<a href="https://github.com/ajtulloch/decisiontrees">decisiontrees library</a> on GitHub - a backend and frontend for
+training gradient boosted decision trees, random forests, etc. written
+in Go. In particular, the <a href="https://github.com/ajtulloch/decisiontrees/blob/master/regression_splitter.go"><code>regression_splitter.go</code></a>,
+<a href="https://github.com/ajtulloch/decisiontrees/blob/master/random_forest.go"><code>random_forest.go</code></a>, and <a href="https://github.com/ajtulloch/decisiontrees/blob/master/boosting.go"><code>boosting.go</code></a> files are where a
+lot of these techniques are implemented.</p>
+<h3 id="incrementally-computing-the-loss">Incrementally computing the loss</h3>
+<p>A simple optimization can take the computation of the loss at any
+given point from $\mathcal{O}(E)$ to $\mathcal{O}(1)$ for a large set
+of loss functions. Consider the case where we minimize $L^2$ loss on
+the splits. Thus, the loss on a given subset is
+\begin{equation}
+L(S) = \sum_{s \in S} (s - \overline S)^{2}
+\end{equation}</p>
+<p>By using the online update formula for the variance of a set of
+samples - which for a stream of samples $x_{1}, \dots, x_{n}$,
+allows us to compute the variance of $\mathbb{V}(x_{1}, \dots,
+x_{n+1}) = \mathbb{V}_{n+1}$ given $\mathbb{V}_{n}$ and the value
+$x_{n+1}$ in constant time and space by tracking $\sum_{i=1}^{n}
+x_{i}^{2}$ and $\sum_{i=1}^{n} x_{i}$.</p>
+<p>See below for the implementation of this approach for $L^2$ loss.</p>
+<script src="https://gist.github.com/ajtulloch/7293348.js"></script>
+
+<h3 id="parallelizing-recursive-tree-construction-steps">Parallelizing recursive tree construction steps</h3>
+<p>Note that once we have decided to split at a given node, there is no
+data sharing between the procedures that compute the left side of the
+tree and the right side of the tree. Thus, we can compute these in
+parallel, and can speed up computation significantly on systems with
+multiple CPUs - asymptotically up to $B$ times faster where $B$ is the
+branching factor on our branch.</p>
+<p>See below for an implementation of this approach.</p>
+<script src="https://gist.github.com/ajtulloch/7293383.js"></script>
+
+<h3 id="parallelizing-finding-the-optimal-split">Parallelizing finding the optimal split</h3>
+<p>The key insight here is that finding the best split amongst $|F|$
+features can be done by forking $|F|$ processes to search through each
+features possible splits in parallel, then joining and finding the
+best candidate split from each subroutine.</p>
+<p>The tradeoff in this approach is that $|F|$ copies of the examples
+must be passed to each subroutine - as the subroutines sort these
+examples which requires ownership of a copy of the data. If we just
+pass a cheap copy of pointers to the examples (e.g.
+<code>std::vector&lt;Example*&gt;</code> in <code>C++</code>), we can easily reduce this cost.
+This speedup depends on the relative sizes of $|F|$ and $|E|$ and the
+cost of memory allocation in the given system, but is in general a
+significant speedup.</p>
+<p>See below for an example implementation in Go, using channels to
+communicate splits back to the master thread.</p>
+<script src="https://gist.github.com/ajtulloch/7293393.js"></script>
+
+<h3 id="influence-trimming-and-stochastic-gradient-boosting">Influence Trimming and Stochastic Gradient Boosting</h3>
+<p>In gradient boosting (and boosting algorithms in general), we weight
+examples by their degree of misclassification by the ensemble thus
+far. The intuition is that each incremental stage is &quot;trained on the
+residuals&quot; of the previous stage.</p>
+<p>At each stage, we compute a weight metric for each example $w_i$,
+representing the influence of a given sample of the next stage. In
+practice, the distribution of influence over examples follows a power
+law, so trimming the bottom $l_\alpha$ samples, where
+\begin{equation} \sum_{i=1}^{l_{\alpha}} w_{i} = \alpha
+\sum_{i=1}^{N} w_{i} \end{equation} for $\alpha$ between 5% and 20%
+can remove a large fraction of samples</p>
+<p>In the <a href="http://statweb.stanford.edu/~jhf/ftp/trebst.pdf">paper</a> introducing gradient boosting, Friedman notes that up
+to 90%-95% of examples at later stages can be reduced without a
+measurable loss in accuracy.</p>
+<script src="https://gist.github.com/ajtulloch/7292976.js"></script>
+
+<p>In a <a href="http://statweb.stanford.edu/~jhf/ftp/stobst.pdf">follow up paper</a> to the initial gradient boosting machine
+paper, Friedman introduces stochastic gradient boosting - at each
+iteration, select a random subset of examples for the construction of
+the next weak learner. Friedman&#39;s experiments indicated that 20%-50%
+of examples can be dropped at any given stage without a significant
+loss in the quality of the ensemble. Given the dependence on the
+number of examples on the time spent training, this can be a useful
+improvement.</p>
+<p>See the following code for the implementation of a boosting round:</p>
+<script src="https://gist.github.com/ajtulloch/7292981.js"></script>
+
+<h3 id="random-forests">Random Forests</h3>
+<p>When using <a href="https://en.wikipedia.org/wiki/Random_forest#Breiman.27s_Algorithm">Brieman&#39;s algorithm</a> to train random forests, there are
+several key speedups over naive ensemble construction:</p>
+<ul>
+<li>For each weak classifier, choose the best splits with $m \ll |F|$
+features, and a boostrap sample of size $n &lt; |E|$ examples.</li>
+<li>Each weak classifier is trained independently of the others (as
+opposed to gradient boosting), and so can be trivially parallelized.</li>
+</ul>
+<p>For example, see the following code that uses Golang&#39;s convenient
+<a href="http://golang.org/pkg/sync/#WaitGroup"><code>sync.WaitGroup</code></a> abstraction for computing the weak learners in
+parallel.</p>
+<script src="https://gist.github.com/ajtulloch/7292836.js"></script>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>We&#39;ve talked about a number of methods that can be used for evaluation
+time improvement. Please have a look at the <a href="https://github.com/ajtulloch/decisiontrees">decisiontrees library</a>
+for an integrated view of how these are implemented. In subsequent
+posts, we&#39;ll talk about the other side of the equation - speeding up
+evaluation of decision trees.</p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

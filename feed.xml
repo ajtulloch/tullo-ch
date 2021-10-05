@@ -1,0 +1,1517 @@
+<?xml version="1.0" encoding="utf-8" ?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel>   <title>Andrew Tulloch</title><atom:link href="https://tullo.ch/feed.xml" rel="self" type="application/rss+xml"></atom:link><link>https://tullo.ch</link><description>Machine Learning, Statistics, Systems</description><pubDate>Sun, 03 Oct 2021 00:00:00 -0700</pubDate><generator>The mighty Wintersmith</generator><language>en</language><item><title>Improving PyTorch inference performance on GPUs with a few simple tricks</title><link>https://tullo.ch/articles/pytorch-gpu-inference-performance/</link><pubDate>Sun, 03 Oct 2021 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/pytorch-gpu-inference-performance/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;We hear a lot these days that &lt;a href=&quot;https://dl.acm.org/doi/10.1145/3317550.3321441&quot;&gt;&amp;quot;machine learning systems are stuck in a rut&amp;quot;&lt;/a&gt;. This is might be expanded out as &amp;quot;standard architectures run  at high efficiencies due to disproportionate engineering effort, while theoretically better but non-standard architectures run at low efficiencies due to the lack of specialized engineering work on these alternatives and the failure of our systems to provide generalized performance.&amp;quot;&lt;/p&gt;
+&lt;p&gt;This is a reasonable thesis. But as long as it is the status quo, we may as well enjoy the empirical efficiencies from standard architectures. That is, less &amp;quot;stuck-in-a-rut&amp;quot; thinking and more &amp;quot;pigs-at-a-trough&amp;quot; thinking! If you&amp;#39;re going to use vanilla architectures and not play with the fanciest modern variants, you may as well take advantage of their practical efficiency.&lt;/p&gt;
+&lt;p&gt;Out of the box, PyTorch doesn&amp;#39;t always provide the best performance for these models. There are good (and bad) reasons for this, but regardless it&amp;#39;s generally very simple to achieve very high &lt;a href=&quot;https://en.wikipedia.org/wiki/Roofline_model&quot;&gt;roofline&lt;/a&gt; efficiency during inference with a few simple steps.&lt;/p&gt;
+&lt;p&gt;Here, I&amp;#39;ll just cover two quick examples: convolutional neural networks (where ResNet-101 is an exemplar rut architecture) and Transformer encoders (where BERT-Large is an exemplar rut architecture), run in float16 on NVIDIA GPUs. This is mostly focusing on the sweet spot of modern ML systems - large(ish) models, NVIDIA GPUs, half-precision, reasonably large batch sizes – and with a little work the results are great.&lt;/p&gt;
+&lt;h2 id=&quot;convolutional-neural-networks-resnet-101-&quot;&gt;Convolutional Neural Networks (ResNet-101)&lt;/h2&gt;
+&lt;p&gt;The highest performance implementation of CNNs on NVIDIA GPUs these days is generally TensorRT.  TensorRT is a graph compilation library - users construct an old-school (i.e. the way we did things roughly 2 years ago) computation graph, and then hand it to TensorRT, which applies a bunch of optimizations (horizontal and vertical kernel fusion, kernel selection, memory planning, and so on).&lt;/p&gt;
+&lt;p&gt;There are a number of ways to go from a PyTorch model to a TensorRT graph. These include &lt;a href=&quot;https://github.com/NVIDIA-AI-IOT/torch2trt&quot;&gt;&lt;code&gt;torch2trt&lt;/code&gt;&lt;/a&gt;, &lt;a href=&quot;https://github.com/pytorch/pytorch/tree/master/torch/fx/experimental/fx2trt&quot;&gt;&lt;code&gt;fx2trt&lt;/code&gt;&lt;/a&gt;, &lt;a href=&quot;https://github.com/NVIDIA/TRTorch/&quot;&gt;TRTorch&lt;/a&gt;, and &lt;a href=&quot;https://pytorch.org/docs/stable/onnx.html&quot;&gt;&lt;code&gt;torch.onnx.export&lt;/code&gt;&lt;/a&gt; followed by &lt;a href=&quot;https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#trtexec-ovr&quot;&gt;&lt;code&gt;trtexec&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;These approaches all end up in roughly the same place - a new &lt;code&gt;nn.Module&lt;/code&gt; instance which dispatches to the compiled TensorRT engine.  With &lt;code&gt;torch2trt&lt;/code&gt;, this is literally a one-liner: &lt;code&gt;model = torch2trt(model, inputs)&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Since this is right in the sweet spot of the NVIDIA stack (a huge amount of dedicated time has been spent making this workload fast), performance is great, achieving roughly 160TFLOP/s on an A100 GPU with TensorRT 8.0, and roughly 4x faster than the naive PyTorch implementation.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;/articles/pytorch-gpu-inference-performance/resnet101.png&quot;&gt;&lt;img src=&quot;/articles/pytorch-gpu-inference-performance/resnet101.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://gist.github.com/ajtulloch/eb268da0ca7ca57d1c239460019183d8&quot;&gt;https://gist.github.com/ajtulloch/eb268da0ca7ca57d1c239460019183d8&lt;/a&gt; is a fully-worked example.&lt;/p&gt;
+&lt;h2 id=&quot;transformer-encoders-bert-large-&quot;&gt;Transformer Encoders (BERT-Large)&lt;/h2&gt;
+&lt;p&gt;Transformer encoders require just a few components to be well implemented to be reasonably fast: &lt;code&gt;nn.TransformerEncoderLayer&lt;/code&gt;, &lt;code&gt;nn.MultiHeadAttention&lt;/code&gt;, and so on if you&amp;#39;re familiar with &lt;code&gt;torch.nn&lt;/code&gt;, or the code underlying &lt;code&gt;transformers.BertModel&lt;/code&gt; if you&amp;#39;re more familiar with HuggingFace transformers. Again for some good and bad reasons, vanilla PyTorch doesn&amp;#39;t implement these in the most performance-optimal way.&lt;/p&gt;
+&lt;p&gt;Luckily, there are a large number of libraries that have produced high-quality and performance tuned implementations of these primitives for inference. These include &lt;a href=&quot;https://github.com/NVIDIA/FasterTransformer&quot;&gt;NVIDIA FasterTransformer&lt;/a&gt;, &lt;a href=&quot;https://github.com/bytedance/lightseq&quot;&gt;ByteDance LightSeq&lt;/a&gt;, &lt;a href=&quot;https://github.com/microsoft/DeepSpeed&quot;&gt;Microsoft DeepSpeed&lt;/a&gt;, and many more.&lt;/p&gt;
+&lt;p&gt;Using these optimized runtimes with an existed trained model in a framework like &lt;a href=&quot;https://github.com/pytorch/fairseq&quot;&gt;&lt;code&gt;fairseq&lt;/code&gt;&lt;/a&gt;, &lt;a href=&quot;https://huggingface.co/transformers/&quot;&gt;HuggingFace transformers&lt;/a&gt;, or a &lt;a href=&quot;https://pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html&quot;&gt;&lt;code&gt;nn.TransformerEncoder&lt;/code&gt;&lt;/a&gt; is a mildly annoying but generally worthwhile exercise - extract out the weights from the vanilla model, reformat them for the target inference runtime, instantiate the new &lt;code&gt;nn.Module&lt;/code&gt;, and swap out the old encoder for the optimized one.&lt;/p&gt;
+&lt;p&gt;There&amp;#39;s really not much more to it than that. If you do this, you might expect roughly 2-4x improvements compared to a naive implementation, and again get to roughly 160TFLOP/s or more.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;/articles/pytorch-gpu-inference-performance/bertlarge.png&quot;&gt;&lt;img src=&quot;/articles/pytorch-gpu-inference-performance/bertlarge.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://gist.github.com/ajtulloch/9c1e051e7389027d5d455c7afc052340&quot;&gt;https://gist.github.com/ajtulloch/9c1e051e7389027d5d455c7afc052340&lt;/a&gt; is a fully worked example of going between a HuggingFace BERT-Large transformer encoder and an equivalent FasterTransformer encoder, and &lt;a href=&quot;https://dev-discuss.pytorch.org/t/making-transformer-inference-faster-on-gpus/190&quot;&gt;this post I wrote&lt;/a&gt; goes into more detail.&lt;/p&gt;
+&lt;h2 id=&quot;keeping-gpus-busy&quot;&gt;Keeping GPUs busy&lt;/h2&gt;
+&lt;p&gt;The high roofline efficiencies quoted here occur at reasonably large batch sizes.  There&amp;#39;s no real way of getting around it – GPUs need a reasonable amount of concurrent work to saturate the increasing number of SMs (up to 108 on the latest A100 GPU) and keep the tensor cores busy. There are a few complementary ways to achieve this in practice: use relatively wide models (where the non-batched dimensions are large), use batching, and use multiple streams at once. All of these help to improve the effective amount of work active on the GPU at once, and drive up achieved utilization.&lt;/p&gt;
+&lt;p&gt;In terms of increasing the effective amount of work at inference time, a good place to start would be to use a dynamic batching queue (first popularized by &lt;a href=&quot;https://arxiv.org/abs/1512.02595&quot;&gt;DeepSpeech 2&lt;/a&gt;) and implemented in &lt;a href=&quot;https://pytorch.org/serve/batch_inference_with_ts.html&quot;&gt;TorchServe&lt;/a&gt;, &lt;a href=&quot;https://github.com/triton-inference-server/server&quot;&gt;Triton&lt;/a&gt;, and many others. Then, look at increasing the number of streams, and ensure you aren&amp;#39;t bottlenecked on the I/O or pre/post-processing.&lt;/p&gt;
+&lt;p&gt;As a rough guide to improving the inference efficiency of standard architectures on PyTorch:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Ensure you are using half-precision on GPUs with &lt;code&gt;model.cuda().half()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Ensure the whole model runs on the GPU, without a lot of host-to-device or device-to-host transfers.&lt;/li&gt;
+&lt;li&gt;Ensure you are running with a reasonably large batch size.&lt;/li&gt;
+&lt;li&gt;Ensure the input pipeline is reasonable (no egregiously slow Python pre/post-processing, etc).&lt;/li&gt;
+&lt;li&gt;Ensure the GPU kernels are well-optimized (e.g. enable TensorRT for CNNs, enable FasterTransformer for Transformers).&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;If you follow these steps, you should get very high efficiency on modern hardware. Occasionally there are upsides to our field being stuck in a rut :)&lt;/p&gt;
+</description></item><item><title>Cambridge Part III Mathematics Notes</title><link>https://tullo.ch/articles/cambridge-mathematics-notes/</link><pubDate>Mon, 27 Oct 2014 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/cambridge-mathematics-notes/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;I&amp;#39;ve cleaned up (somewhat) my notes from Cambridge Part III and have
+put them online - with LaTeX sources available on &lt;a href=&quot;https://github.com/ajtulloch/CambridgeMathematicsPartIII&quot;&gt;GitHub&lt;/a&gt; and PDFs
+linked below.&lt;/p&gt;
+&lt;h3 id=&quot;advanced-financial-models&quot;&gt;Advanced Financial Models&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/AdvancedFinancialModels-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/AdvancedFinancialModels-Summary.pdf&quot;&gt;Summary&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;advanced-probability&quot;&gt;Advanced Probability&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/AdvancedProbability-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;applied-bayesian-statistics&quot;&gt;Applied Bayesian Statistics&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/AppliedBayesianStatistics-Summary.pdf&quot;&gt;Summary&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;convex-optimization&quot;&gt;Convex Optimization&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/ConvexOptimization-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/ConvexOptimization-Summary.pdf&quot;&gt;Summary&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;mathematics-of-operations-research&quot;&gt;Mathematics Of Operations Research&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/MathematicsOfOperationsResearch-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/MathematicsOfOperationsResearch-Summary.pdf&quot;&gt;Summary&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;non-parametric-statistics&quot;&gt;Non-Parametric Statistics&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/NonParametricStatistics-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/NonParametricStatistics-Summary.pdf&quot;&gt;Summary&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;percolation&quot;&gt;Percolation&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/Percolation-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;ramsay-theory&quot;&gt;Ramsay Theory&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/RamsayTheory-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;statistical-theory&quot;&gt;Statistical Theory&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/StatisticalTheory-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/StatisticalTheory-Summary.pdf&quot;&gt;Summary&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;time-series-and-monte-carlo-analysis&quot;&gt;Time Series and Monte Carlo Analysis&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/TimeSeriesMonteCarlo-LectureNotes.pdf&quot;&gt;Lecture Notes&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/cambridge/TimeSeriesMonteCarlo-Summary.pdf&quot;&gt;Summary&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description></item><item><title>The LASSO Estimator</title><link>https://tullo.ch/articles/lasso-estimator/</link><pubDate>Sat, 31 May 2014 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/lasso-estimator/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;As far as I can tell, the LASSO estimator is the closest thing we have
+to a miracle in modern statistics.&lt;/p&gt;
+&lt;p&gt;The LASSO estimator is defined as a solution to the minimization
+problem $\frac{1}{n} \| Y - X \theta \|_2^2 + \lambda \| \theta \|_1$
+over $\mathbb{R}^p$. The key insight here is that this is a convex
+problem in $\theta$ - this follows from both norms being convex and
+the sum of convex functions being convex.  This allows us to design
+efficient solvers for this problem and thus handle large-scale
+problems - see, for example, ADMM, iterative shrinkage, gradient
+projection, etc.&lt;/p&gt;
+&lt;p&gt;The LASSO can be viewed as convex relaxation of a very natural problem
+in statistical estimation - finding the best $k$-sparse vector to
+minimize $\| Y - X \theta \| + \lambda \| \theta \|_0$, where the
+$L_0$ norm (indeed, not actually a norm) is to be interpreted as the
+number of non-zero coefficients in $\theta$. This comes from problems
+such as in signal processing and genomics array data where we have $p$
+(the number of covariates) significantly larger than $n$, the number of
+observations. In this case, the usual least-squares estimation theory
+dating back to Gauss does not apply ($X$ cannot have full rank), and
+we must find other alternatives. The brute-force approach is
+combinatorially hard (we must check each $p \choose k$ sets of
+supports, which takes time exponential in $p$).&lt;/p&gt;
+&lt;p&gt;Thus, the LASSO objective can be seen as a natural convex relation of
+the original problem (e.g. taking $p$ from $0$ upwards and stopping as
+soon as $\| \theta \|_p$ is convex).&lt;/p&gt;
+&lt;p&gt;The &amp;quot;miracle&amp;quot; I refer to is the amazing result of Candes &amp;amp; Tao in a
+series of papers starting in 2005 that established that for a large
+class of observation matrices $X$, we have the amazing result that
+with very high probability, solving the LASSO problem is equivalent to
+solving the original combinatorially hard problem.  Formally, we have
+the following theorem, which contains a germ of the restricted
+isometry property.&lt;/p&gt;
+&lt;h3 id=&quot;the-optimality-of-the-lasso-estimator&quot;&gt;The Optimality of the LASSO estimator&lt;/h3&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Let $\theta_0$ be $k$-sparse with support $S_0$, and let $Y = X
+\theta + \epsilon$, with $\epsilon \sim N(0, \sigma^2 I_n)$. Let
+$\tilde \theta$ be the LASSO estimator of $(Y, X)$ with parameter
+$\lambda = 4 \overline \sigma \sqrt{\frac{t^2 + 2 \log p}{n}}$.
+Assume that $\| \tilde \theta_{S_0} - \theta_0 \|_1^2 \leq k
+r_0 (\tilde \theta - \theta_0)^T \hat \Sigma (\tilde \theta -
+\theta_0)$ with probability at least $1 - \beta$ for some $r_0$.
+Then with probability at least $1 - \beta - e^{-\frac{t^2}{2}}$, we
+have that \begin{equation} \frac{1}{n} \| X(\tilde \theta -
+\theta_0) \|_2^2 + \lambda \| \tilde \theta - \theta_0 \| \leq 4
+k r_0 \lambda^2 \end{equation}&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;The proof is fairly elementary, requiring only a basic concentration
+of measure inequality for subgaussian random variables. The key step
+is recognizing that we can bound the event $\max_{j} \frac{2}{n} \|
+(\epsilon^T X)_j \| \geq \frac{\lambda}{2}$ on a set of measure less
+than $e^-\frac{t^2}{2}$. Once we have this result, we can apply the
+triangle inequality and the restricted isometry condition in the
+theorem to obtain the desired result.&lt;/p&gt;
+</description></item><item><title>A modern Emacs setup in OS X</title><link>https://tullo.ch/articles/modern-emacs-setup/</link><pubDate>Fri, 16 May 2014 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/modern-emacs-setup/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;About a year ago I switched from Vim to Emacs, and I couldn&amp;#39;t be
+happier about the move.  I spent some time getting a setup I was happy
+with, and thought I&amp;#39;d share it for those who are also looking to move
+to Emacs.&lt;/p&gt;
+&lt;p&gt;For more information, my entire &lt;code&gt;.emacs.d&lt;/code&gt; is available in my
+&lt;a href=&quot;https://github.com/ajtulloch/dots/tree/cellar-emacs&quot;&gt;dots repository&lt;/a&gt; on GitHub.&lt;/p&gt;
+&lt;h2 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;/h2&gt;
+&lt;script
+src=&quot;https://gist.github.com/ajtulloch/0ba98b93800d9ca97f2a.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;Install &lt;a href=&quot;https://github.com/rdallasgray/pallet&quot;&gt;Pallet&lt;/a&gt;, a wrapper for Cask used to manage your Emacs
+packages (think &lt;code&gt;apt-get&lt;/code&gt;, &lt;code&gt;yum&lt;/code&gt;, etc.)&lt;/p&gt;
+&lt;p&gt;Copy &lt;a href=&quot;https://github.com/ajtulloch/dots/blob/cellar-emacs/emacs/Cask&quot;&gt;my Cask file&lt;/a&gt; into your &lt;code&gt;~/.emacs.d/Cask&lt;/code&gt;, and run &lt;code&gt;cask
+install&lt;/code&gt;. This will pull down all the listed packages into the &lt;code&gt;.cask&lt;/code&gt;
+directory and let you immediately get started.&lt;/p&gt;
+&lt;h2 id=&quot;customization&quot;&gt;Customization&lt;/h2&gt;
+&lt;p&gt;In terms of structuring and managing an ever-expanding set of
+customizations, I&amp;#39;ve found the following layout seems to work well.&lt;/p&gt;
+&lt;p&gt;For your &lt;code&gt;~/.emacs.d/init.el&lt;/code&gt;, use the following:&lt;/p&gt;
+&lt;script
+src=&quot;https://gist.github.com/27e1c1ac1a1e680f5398.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;This instructs Emacs to initialize packages with Cask/Pallet, and then
+loads all the customizations in the order you specify in your
+&lt;code&gt;~/.emacs.d/customizations&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Entries in the &lt;code&gt;~/.emacs.d/customizations&lt;/code&gt; are of the form
+&lt;code&gt;02-global.el&lt;/code&gt;.  This guarantees initialization ordering (which
+can be useful), and allows you to separate settings naturally (one
+file for each language, etc.)&lt;/p&gt;
+&lt;p&gt;I&amp;#39;ll quickly mention a few generic customizations I&amp;#39;ve added, but see
+the full &lt;a href=&quot;https://github.com/ajtulloch/dots/tree/cellar-emacs&quot;&gt;.emacs.d&lt;/a&gt; for a more complete set of
+changes (including various customizations for Haskell, Go, Python,
+Julia, R, LaTeX, Scala, JS, etc).&lt;/p&gt;
+&lt;h3 id=&quot;some-useful-shortcuts&quot;&gt;Some Useful Shortcuts&lt;/h3&gt;
+&lt;p&gt;This is just a laundry-list of shortcuts I&amp;#39;ve found useful at various
+times.  They rely on various packages and custom functions - see the
+full repository for details.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/772afb5cbebf1e8bf2d8.js&quot;&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;magit&quot;&gt;Magit&lt;/h3&gt;
+&lt;script
+src=&quot;https://gist.github.com/0fcd723f30bd0760ac1d.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;This makes it cleaner to switch into Magit - simply pressing &lt;code&gt;C-c C-g&lt;/code&gt;
+puts Magit into fullscreen mode, where you can
+cleanup/stage/commit/amend/push with only a few presses, and then
+pressing &lt;code&gt;q&lt;/code&gt; takes you back to the window state you had before
+entering Magit.  It&amp;#39;s really a pleasure to use.&lt;/p&gt;
+&lt;h3 id=&quot;github-gist-utilities&quot;&gt;GitHub Gist utilities&lt;/h3&gt;
+&lt;script src=&quot;https://gist.github.com/5a631e9dde9d812e3633.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;This makes it easy to take a buffer or region in Emacs and view it in
+various external services - currently &lt;a href=&quot;http://mkdown.com&quot;&gt;mkdown.com&lt;/a&gt; for pretty
+Markdown viewing and &lt;a href=&quot;http://nbviewer.ipython.org/&quot;&gt;iPython NBViewer&lt;/a&gt; for iPython notebooks.
+These are the kind of small, useful functions that can be easily
+written with elisp (as opposed to the pain of trying to use
+vimscript for anything non-trivial).&lt;/p&gt;
+&lt;h2 id=&quot;sources-of-inspiration&quot;&gt;Sources of Inspiration&lt;/h2&gt;
+&lt;p&gt;A few resources I used over the past year:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://sites.google.com/site/steveyegge2/effective-emacs&quot;&gt;Yegge&amp;#39;s Effective Emacs&lt;/a&gt; is an excellent resource.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/technomancy/better-defaults&quot;&gt;Phil Hagelberg&amp;#39;s &lt;code&gt;better-defaults&lt;/code&gt;&lt;/a&gt; is great (and in the&lt;/li&gt;
+&lt;li&gt;aforementioned Cask file).&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://whattheemacsd.com/&quot;&gt;what the emacs.d?&lt;/a&gt; has some excellent snippets you can use.&lt;/li&gt;
+&lt;/ul&gt;
+</description></item><item><title>A Parallel Boggle Solver in Haskell</title><link>https://tullo.ch/articles/boggle-solving-in-haskell/</link><pubDate>Sat, 05 Apr 2014 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/boggle-solving-in-haskell/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;A cute interview question I&amp;#39;ve had is &amp;quot;given an $n \times n$ board of
+characters and a dictionary, find all possible words
+formed by a self-avoiding path in the grid&amp;quot;.  This is otherwise known
+as &amp;quot;Boggle&amp;quot;.&lt;/p&gt;
+&lt;p&gt;A simple solution is just conducting a graph traversal of the game board - for
+each of the $n^2$ positions, we conduct a DFS search starting at that
+position, tracking the previously visited positions at each stage.&lt;/p&gt;
+&lt;p&gt;This is trivial to do in any language, but I thought it would be
+an interesting application of Simon Marlow&amp;#39;s &lt;code&gt;Control.Monad.Parallel&lt;/code&gt;
+Haskell library to conduct these traversals  in parallel.&lt;/p&gt;
+&lt;p&gt;The full implementation is available on GitHub at
+&lt;a href=&quot;https://github.com/ajtulloch/boggle&quot;&gt;https://github.com/ajtulloch/boggle&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&quot;types&quot;&gt;Types&lt;/h2&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9993421.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;solver&quot;&gt;Solver&lt;/h2&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9993420.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;analysis&quot;&gt;Analysis&lt;/h2&gt;
+&lt;p&gt;The key line (indeed, the only line relevant to parallelism) is&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-hs&quot;&gt;&lt;span class=&quot;comment&quot;&gt;-- construct candidate words in parallel&lt;/span&gt;
+&lt;span class=&quot;title&quot;&gt;parallelExpand&lt;/span&gt; = concat . parMap rdeepseq expand&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;which (in parallel) expands our current node in the DFS graph, and
+concatenates the results together.  Note how trivial it is in a
+pure functional language to parallelize a function - compare this to
+the equivalent snippet in Python, C++, etc.&lt;/p&gt;
+&lt;p&gt;Note the type signatures&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;*Main&amp;gt; :t parMap rdeepseq
+parMap rdeepseq :: NFData b =&amp;gt; (a -&amp;gt; b) -&amp;gt; [a] -&amp;gt; [b]
+*Main&amp;gt; :t map
+map :: (a -&amp;gt; b) -&amp;gt; [a] -&amp;gt; [b]&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;which indicate that &lt;code&gt;parMap rdeepseq&lt;/code&gt; is a drop-in replacement for an
+existing &lt;code&gt;map&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Go is slightly nicer than most, for example:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-go&quot;&gt;results := &lt;span class=&quot;built_in&quot;&gt;make&lt;/span&gt;(&lt;span class=&quot;keyword&quot;&gt;chan&lt;/span&gt; []&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;, &lt;span class=&quot;built_in&quot;&gt;len&lt;/span&gt;(jobs))
+
+&lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt; _, job := &lt;span class=&quot;keyword&quot;&gt;range&lt;/span&gt; jobs {
+    &lt;span class=&quot;keyword&quot;&gt;go&lt;/span&gt; &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(job Job)&lt;/span&gt;&lt;/span&gt; {
+        results &amp;lt;- run(job)
+    }(job)
+}
+
+combined := &lt;span class=&quot;built_in&quot;&gt;make&lt;/span&gt;([]&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt;, &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;)
+&lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt; _, _ = &lt;span class=&quot;keyword&quot;&gt;range&lt;/span&gt; jobs {
+    &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt; _, p := &lt;span class=&quot;keyword&quot;&gt;range&lt;/span&gt; &amp;lt;-results {
+        combined = &lt;span class=&quot;built_in&quot;&gt;append&lt;/span&gt;(combined, p)
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;although even this pales in comparison to Haskell&amp;#39;s elegance here.&lt;/p&gt;
+&lt;h2 id=&quot;performance&quot;&gt;Performance&lt;/h2&gt;
+&lt;p&gt;Using GHC runtime system flags, we can control the number of OS
+threads used by the runtime, which allows us to control the degree of
+parallelism (and hence the amount of speedup from the parallelism)&lt;/p&gt;
+&lt;p&gt;First, the serial case:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;∴ time dist/build/boggle/boggle 4 +RTS -N1 -H1G -RTS &amp;gt; /dev/null
+dist/build/boggle/boggle 4 +RTS -N1 -H1G -RTS &amp;gt; /dev/null  41.12s user
+0.50s system 99% cpu 41.652 total&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;∴ time dist/build/boggle/boggle 4 +RTS -N8 -H1G -RTS &amp;gt; /dev/null
+dist/build/boggle/boggle 4 +RTS -N8 -H1G -RTS &amp;gt; /dev/null  63.89s user
+1.64s system 744% cpu 8.801 total&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We see approximately &lt;strong&gt;5x&lt;/strong&gt; speedup from executing in parallel across
+8 cores (42 seconds to 9 seconds), which indicates our parallelism is
+effective here.&lt;/p&gt;
+&lt;h2 id=&quot;more-information&quot;&gt;More Information&lt;/h2&gt;
+&lt;p&gt;Of course, it&amp;#39;s also possible to improve the performance in the
+single-threaded case - use a trie for efficiently eliminating large
+swathes of the graph by eliminating partial solutions for whom no word
+with the given prefix exists in the dictionary, etc.  A hash trie can
+determine this in $\mathcal{O}(|q|)$, where $|q|$ is the length of the
+prefix up to the given point.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://news.ycombinator.com/item?id=7540479&quot;&gt;Discuss this on Hacker News&lt;/a&gt;.&lt;/p&gt;
+</description></item><item><title>Python vs Julia - an example from machine learning</title><link>https://tullo.ch/articles/python-vs-julia/</link><pubDate>Tue, 11 Mar 2014 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/python-vs-julia/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;In &lt;a href=&quot;http://tullo.ch/articles/speeding-up-isotonic-regression/&quot;&gt;Speeding up isotonic regression in scikit-learn&lt;/a&gt;,
+we dropped down into Cython to improve the performance of a regression
+algorithm. I thought it would be interesting to compare the
+performance of this (optimized) code in Python against the naive Julia
+implementation.&lt;/p&gt;
+&lt;p&gt;This article continues on from &lt;a href=&quot;http://tullo.ch/articles/speeding-up-isotonic-regression/&quot;&gt;the previous one&lt;/a&gt;, so
+it may be worth reading that before continuing here to obtain the necessary
+background information.&lt;/p&gt;
+&lt;p&gt;We&amp;#39;ll implement both of the algorithms for the previous article, and
+compare their performance in Julia against Python.&lt;/p&gt;
+&lt;h2 id=&quot;linear-pava&quot;&gt;Linear PAVA&lt;/h2&gt;
+&lt;p&gt;The Cython code is available on GitHub at &lt;a href=&quot;https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/_isotonic.pyx&quot;&gt;&lt;code&gt;scikit-learn&lt;/code&gt;&lt;/a&gt;,
+and the Julia code is available on GitHub at &lt;a href=&quot;https://github.com/ajtulloch/Isotonic.jl&quot;&gt;Isotonic.jl&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The Julia implementation is straightforward implementation of PAVA,
+without any bells and whistles. The &lt;code&gt;@inbounds&lt;/code&gt; macro was used to
+compare fairly with the Cython implementation, which turns off bounds
+checking as well.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9484357.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9485644.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;active-set&quot;&gt;Active Set&lt;/h2&gt;
+&lt;p&gt;The active set implementation is approximately the same number of
+lines as the Cython implementation, and is perhaps more cleanly
+structured (via an explicit composite type &lt;code&gt;ActiveState&lt;/code&gt;) that
+maintains a given active dual variable&amp;#39;s parameters. It is also
+trivial to break repeated code into separated functions that
+can be trivially inlined by LLVM, while this is difficult for
+arbitrary arguments in Cython.&lt;/p&gt;
+&lt;p&gt;One-based indexing in Julia also made the algorithm somewhat cleaner.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9484368.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9485601.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;performance&quot;&gt;Performance&lt;/h2&gt;
+&lt;p&gt;We see that exactly the same algorithm in Julia is uniformly faster
+when compared to an equivalent Cython implementation.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://f.cloud.github.com/assets/1121581/2385599/d0ad76c6-a91f-11e3-84a1-3b2965ba5ea0.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;For the active set implementations, Julia is anywhere between &lt;strong&gt;5x and
+300x faster&lt;/strong&gt; on equivalent regression problems.&lt;/p&gt;
+&lt;p&gt;For the linear PAVA implementation, Julia is between &lt;strong&gt;1.1x and 4x
+faster&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;This certainly indicates Julia is a very attractive choice for
+performance-critical machine learning applications.&lt;/p&gt;
+&lt;p&gt;See the &lt;a href=&quot;http://nbviewer.ipython.org/url/gist.githubusercontent.com/ajtulloch/9485996/raw/94b3d0e6bd67256f1f02eebb1463365dbc8b64fc/Julia.ipynb&quot;&gt;iJulia notebook&lt;/a&gt; for more information on how these
+performance measurements were obtained.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://news.ycombinator.com/item?id=7383121&quot;&gt;Discuss this article on HackerNews.&lt;/a&gt;&lt;/p&gt;
+</description></item><item><title>Speeding up isotonic regression in scikit-learn by 5,000x</title><link>https://tullo.ch/articles/speeding-up-isotonic-regression/</link><pubDate>Sun, 09 Mar 2014 00:00:00 -0800</pubDate><guid isPermaLink="true">https://tullo.ch/articles/speeding-up-isotonic-regression/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/Isotonic_regression&quot;&gt;Isotonic regression&lt;/a&gt; is a useful non-parametric regression
+technique for fitting an increasing function to a given dataset.&lt;/p&gt;
+&lt;p&gt;A classic use is in improving the calibration of a probabilistic
+classifier.  Say we have a set of 0/1 data-points (e.g. ad clicks), and
+we train a probabilistic classifier on this dataset.&lt;/p&gt;
+&lt;p&gt;Unfortunately, we find that our classifier is poorly calibrated - for
+cases where it predicts ~50% probability of a click, there is actually
+a 20% probability of a click, and so on.&lt;/p&gt;
+&lt;p&gt;In this case, we can learn an isotonic regression model on the output
+of the classifier, where our increasing function we fit is $\mathcal{P}(+ , | ,
+\text{classifiers prediction})$.  The constraint that the function is
+increasing means that the ordering of events is preserved by the
+transformation, which is an important constraint.&lt;/p&gt;
+&lt;p&gt;With a trained isotonic regression model, our final output is the
+composition of the classifiers prediction with the isotonic regression
+function.&lt;/p&gt;
+&lt;p&gt;For an example of this usage, see the Google
+&lt;a href=&quot;http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/41159.pdf&quot;&gt;Ad Click Prediction - A View from the Trenches&lt;/a&gt;
+paper from KDD 2013, which covers this technique in section 7. The
+&lt;a href=&quot;http://research.microsoft.com/pubs/122779/AdPredictor%20ICML%202010%20-%20final.pdf&quot;&gt;AdPredictor ICML paper&lt;/a&gt; paper also uses this technique
+for calibrating a Naive Bayes predictor.&lt;/p&gt;
+&lt;p&gt;We&amp;#39;ll now detail how we made the &lt;a href=&quot;http://scikit-learn.org/&quot;&gt;&lt;code&gt;scikit-learn&lt;/code&gt;&lt;/a&gt;
+implementation of isotonic regression more than ~5,000x faster, while
+reducing the number of lines of code in the implementation.&lt;/p&gt;
+&lt;h2 id=&quot;the-pooled-adjacent-violators-algorithm&quot;&gt;The Pooled Adjacent Violators Algorithm&lt;/h2&gt;
+&lt;p&gt;The pooled adjacent violators algorithm (PAVA) is a useful algorithm
+for fitting weighted isotonic regressions to data.&lt;/p&gt;
+&lt;p&gt;PAVA is a linear-time algorithm for fitting an isotonic regression
+model. There is a nice visualization and explanation at
+&lt;a href=&quot;http://fa.bianp.net/blog/2013/isotonic-regression/&quot;&gt;Fabian Pedregosa&amp;#39;s blog&lt;/a&gt;.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The algorithm sweeps through the data looking for violations of the
+monotonicity constraint. When it finds one, it adjusts the estimate to
+the best possible fit with constraints. Sometimes it also needs to
+modify previous points to make sure the new estimate does not violate
+the constraints.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;See &lt;a href=&quot;http://www.jstatsoft.org/v32/i05/paper&quot;&gt;Isotone Optimization in R&lt;/a&gt; for a more
+formal introduction to PAVA and active set methods for isotone regression.&lt;/p&gt;
+&lt;h2 id=&quot;speeding-up-isotonic-regression&quot;&gt;Speeding up Isotonic Regression&lt;/h2&gt;
+&lt;p&gt;I wrote the current scikit-learn implementation after seeing the
+previous implementation was much slower than equivalent
+implementations in R, etc.&lt;/p&gt;
+&lt;p&gt;The original algorithm used the active set, which is in some sense
+mathematically dual to PAVA, and seemed to scale quite slowly
+(approximately $\mathcal{O}(N^2)$). This is despite being implemented
+in Cython, which compiles Python-like code to C, and is generally very
+fast. After some profiling, it turned out this slowness was due to the
+$\mathcal{O}(N)$ list pop in the inner loop (lines 29 and 39 of the
+below gist)&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9447845.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;Additionally, the implementation was not amenable to efficient machine
+code generation, given the large number of calls to the native Python
+in the generated Cython code.  In the below image, white lines are
+essentially translated to C, while yellow lines call into the Python
+API, and are thus much more expensive.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://f.cloud.github.com/assets/1121581/2368135/c715541e-a797-11e3-818e-286982071d96.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;Additionally, the algorithm allocates a significant amount of memory,
+due to maintaining and updating the auxiliary data structure
+&lt;code&gt;active_sets&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Thus, it seemed promising to seek to improve the performance of this
+code. Profiling (using &lt;code&gt;Instruments.app&lt;/code&gt; on OS X) indicated that the
+heavy memory allocation and the list &lt;code&gt;pop&lt;/code&gt; were the key causes of
+slowdown, so an efficient Cython implementation of PAVA seemed a
+natural choice.  PAVA can be implemented entirely in-place (so no
+additionally memory allocations are needed) and does not require any
+operations beyond indexing into arrays, so can be efficiently compiled
+by Cython.&lt;/p&gt;
+&lt;p&gt;Once a simple benchmarking script had been written (to quickly
+validate performance improvements), we set about implementing PAVA.
+The PAVA implementation is gisted below.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/9447957.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;A few interesting aspects of this approach:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;No memory allocations are made - mutations are made in-place to the
+&lt;code&gt;solution&lt;/code&gt; vector.&lt;/li&gt;
+&lt;li&gt;The algorithm is essentially pure C with a Python syntax - the type
+information available to the compiler means that the generated code is
+as efficient as a pure C implementation.&lt;/li&gt;
+&lt;li&gt;This algorithm is essential $\mathcal{O}(N^2)$ - we don&amp;#39;t use the
+optimization of collapsing subsequences into a single point, which is
+required to achieve $\mathcal{O}(N)$ asymptotics.  Experiments
+indicated this optimization didn&amp;#39;t improve performance.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The output of &lt;code&gt;cython --annotate&lt;/code&gt; indicates that we have effectively
+eliminated all Python API calls, and are being translated into
+straightforward C.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://f.cloud.github.com/assets/1121581/2368157/97ba2770-a798-11e3-8bbb-9693a0f62ffa.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;h2 id=&quot;performance&quot;&gt;Performance&lt;/h2&gt;
+&lt;p&gt;Benchmark results indicate the simple PAVA algorithm performs much
+faster - &lt;strong&gt;approximately 5,000x faster with 1,000,000 data-points,
+approximately 500x faster with 100,000 data-points, and 14x faster with
+1,000 data-points&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;On a log-log scale, the performance improvements are visualized below
+for two separate datasets - a randomly perturbed version of $\log(1 +
+x)$, and a simulated univariate logistic regression dataset.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://f.cloud.github.com/assets/1121581/2368112/bb6135a8-a796-11e3-8168-727abed7ec24.png&quot; alt=&quot;&quot;&gt;
+&lt;img src=&quot;https://f.cloud.github.com/assets/1121581/2368113/bb7482f2-a796-11e3-8b3d-aeafa802a717.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;h2 id=&quot;the-importance-of-being-typed&quot;&gt;The Importance of Being Typed&lt;/h2&gt;
+&lt;p&gt;It is also instructive to examine the effect that Cython type
+information has on the performance of the PAVA implementation.
+Stripping the &lt;code&gt;cdef&lt;/code&gt; block yields the following comparative
+performance:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://f.cloud.github.com/assets/1121581/2368114/bb76e7f4-a796-11e3-8adf-ed59295b4026.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;Thus, stripping out the type annotations can makes the same Cython algorithm
+&lt;strong&gt;~100x-500x slower&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;There&amp;#39;s a lesson here in the importance of constant factors when doing
+performance-critical work - and another one on understanding all
+stages of your tool-chain.&lt;/p&gt;
+&lt;p&gt;A ~100x-500x performance hit from not adding type information is
+incredibly high, and is both a reflection of the speed of
+straight-line C code, and the cost of falling back to the Python interpreter.&lt;/p&gt;
+&lt;h2 id=&quot;more-information&quot;&gt;More Information&lt;/h2&gt;
+&lt;p&gt;See the &lt;a href=&quot;https://github.com/scikit-learn/scikit-learn/pull/2944&quot;&gt;GitHub pull request&lt;/a&gt; for more information and discussion.&lt;/p&gt;
+</description></item><item><title>Stripe CTF Distributed Systems - Minimal Solutions</title><link>https://tullo.ch/articles/stripe-ctf-golfing/</link><pubDate>Tue, 28 Jan 2014 12:12:45 -0800</pubDate><guid isPermaLink="true">https://tullo.ch/articles/stripe-ctf-golfing/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;The &lt;a href=&quot;http://stripe-ctf.com&quot;&gt;Stripe CTF&lt;/a&gt; Distributed Systems edition has just finished, and
+I passed all the levels (and was one of the first fifty contestants to
+finish). In constructing my solutions, I thought it would be an
+interesting challenge to attempt to construct the minimal changes to
+the reference solutions that are sufficient to pass the scoring
+requirements.&lt;/p&gt;
+&lt;p&gt;To be clear - these aren&amp;#39;t high-quality (or high-scoring) solutions.
+I&amp;#39;m not especially proud of these. They are just &lt;em&gt;small&lt;/em&gt; solutions,
+and somewhat interesting for that reason.&lt;/p&gt;
+&lt;h2 id=&quot;level-0&quot;&gt;Level 0&lt;/h2&gt;
+&lt;p&gt;The challenge is to speed up a simple script that loads a dictionary
+into memory, then loops through the input and checks if the input
+exists in the dictionary.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/305491a7edd195ba1358.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;The trivial solution is just to replace the linear scan in a vector
+with a lookup in a hash set (thus replacing an $O(n)$
+traversal with $O(1)$ lookup).  This is sufficiently fast to pass.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/c2ae443eb113cd7089c9.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;The net diff is two lines changed.&lt;/p&gt;
+&lt;h2 id=&quot;level-1&quot;&gt;Level 1&lt;/h2&gt;
+&lt;p&gt;The challenge is to craft a Git commit message with a commit hash less
+than (lexicographically) than a given difficutly level.  The reference
+implementation is fairly simple, written in Bash.&lt;/p&gt;
+&lt;p&gt;The bottleneck is the SHA1 computation - we have to compute the hashes
+as fast as possible, and the naive solution just doesn&amp;#39;t cut it.  To
+get around this while reusing the maximum amount of code, we just
+replace this inner loop with an &amp;#39;optimized&amp;#39; (loosely speaking) Python
+script that just loops through candidate messages and returns one
+satisfying the difficulty level.&lt;/p&gt;
+&lt;p&gt;Our Python miner is given below&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/22d645c1826a71f6064e.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;The net difference is six lines changed on the &lt;code&gt;miner&lt;/code&gt;, and a twenty
+line Python helper script.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/3474342810ff771009d0.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;level-2&quot;&gt;Level 2&lt;/h2&gt;
+&lt;p&gt;The challenge is to rapidly identify elephants from mice - we konw
+that elephants send a large number of queries per round, while the
+mice send only a few queries per round.&lt;/p&gt;
+&lt;p&gt;Simply tracking the number of queries per IP (and dropping any queries
+past a certain threshold), is sufficient to pass.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/3dddf877cee3adf0cb50.js&quot;&gt;&lt;/script&gt;
+
+
+&lt;h2 id=&quot;level-3&quot;&gt;Level 3&lt;/h2&gt;
+&lt;p&gt;Level 3 was nice from a creativity standpoint - there were a huge
+number of directions we could take for this level.  More efficient indexing,
+smarter communication between nodes, better use of memory, etc.&lt;/p&gt;
+&lt;p&gt;The simplest approach that passed (in terms of number of lines of code
+changed) seemed to be was&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Avoid the overhead of communicating to multiple nodes over HTTP, and
+just communicate with a single search node in the same process as the master.&lt;/li&gt;
+&lt;li&gt;Avoid loading files from disk each time, and cache each file in
+memory for the duration of the test.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The total lines of code changed were three lines to spin up a
+local server instead of remote clients, and two to cache the contents
+of each file in memory.  This feels close to optimal for this
+problem.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/e05f75aaa6ba3b5b0241.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;level-4&quot;&gt;Level 4&lt;/h2&gt;
+&lt;p&gt;This was my favourite level in the CTF - Go is like a DSL for
+distributed systems, so it was fun to modify.  The challenge was to
+make an existing replicated SQL database cluster consistent.  The test
+harness spins up five replicas, sends SQL queries to all replicas,
+injects failures in the communication between nodes, and tests that
+the replication protocol is &lt;a href=&quot;http://en.wikipedia.org/wiki/Sequential_consistency&quot;&gt;sequentially consistent&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;A natural solution is to use the well-tested &lt;a href=&quot;https://github.com/goraft/raft&quot;&gt;&lt;code&gt;goraft&lt;/code&gt;&lt;/a&gt;
+library for handling distributed replication. The &lt;code&gt;goraft&lt;/code&gt; API fits
+this model naturally - Raft maintains a replicated state machine,
+through executing commands from a replicated log.&lt;/p&gt;
+&lt;p&gt;Thus each SQL command that is executed is an entry in the log, and the
+index of this command in the distributed log is the sequence number.
+A basic implementation is trivial to implement with &lt;code&gt;goraft&lt;/code&gt;, see
+&lt;a href=&quot;https://github.com/goraft/raftd&quot;&gt;&lt;code&gt;raftd&lt;/code&gt;&lt;/a&gt; for an example which maintains a distributed KV store
+(instead of a distributed SQL database), but is otherwise functionally
+identical.&lt;/p&gt;
+&lt;p&gt;The next issue arises from learning that it is not sufficient to
+simply drop queries sent to follower nodes, as doing so results in a
+system that does not respond to sufficiently many queries.  There are
+a few ways to get around this.  As the test harness does not support
+redirects, it appears most chose to proxy requests to leader nodes,
+and forward that response from the leader to the test harness.&lt;/p&gt;
+&lt;p&gt;This approach fails, however, when the following sequence of events
+take place:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Follower successfully sends request to leader&lt;/li&gt;
+&lt;li&gt;Leader successfully executes command and appends entry to the
+replicated log.&lt;/li&gt;
+&lt;li&gt;The link between the follower and leader is disrupted, and thus the
+follower assumes the query failed&lt;/li&gt;
+&lt;li&gt;The follower responds to the test harness that the query failed.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;In this scenario, there is a discrepancy between what has been
+recorded on the distributed log (the query succeed and was committed),
+and what was reported to the test harness, and this mean
+disqualification.&lt;/p&gt;
+&lt;p&gt;Thus, we need some kind of way to get around this &amp;quot;false failure&amp;quot;. One
+simple way is to tag each command with a unique ID before forwarding
+to the master, and in the event that a response fails to return to the
+master (e.g. transient network failure), we poll the replicated log to
+see if our command has been executed by the distributed system. This
+has quite ugly properties (we are racing between the test harness
+timing out the request to the follower and the replication reaching
+the follower), though it works for the case of the harness.&lt;/p&gt;
+&lt;p&gt;Despite implementing such a powerful distributed consensus algorithm,
+the code is fairly short - still the longest problem in this list, but
+we can get the implementation done in 162 insertions and 69 deletions.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/ab5d358a50bbbb569604.js&quot;&gt;&lt;/script&gt;
+
+</description></item><item><title>The Performance of Decision Tree Evaluation Strategies</title><link>https://tullo.ch/articles/decision-tree-evaluation/</link><pubDate>Mon, 02 Dec 2013 00:00:00 -0800</pubDate><guid isPermaLink="true">https://tullo.ch/articles/decision-tree-evaluation/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;UPDATE: Compiled evaluation is now implemented for
+&lt;a href=&quot;http://scikit-learn.org&quot;&gt;scikit-learn&lt;/a&gt; regression tree/ensemble
+models, available at
+&lt;a href=&quot;https://github.com/ajtulloch/sklearn-compiledtrees&quot;&gt;https://github.com/ajtulloch/sklearn-compiledtrees&lt;/a&gt; or &lt;code&gt;pip install
+sklearn-compiledtrees&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;http://tullo.ch/articles/speeding-up-decision-tree-training/&quot;&gt;Our previous article&lt;/a&gt; on decision trees dealt
+with techniques to speed up the training process, though often the
+performance-critical component of the machine learning pipeline is the
+prediction side. Training takes place offline, whereas predictions are
+often in the hot path - consider ranking documents in response to a
+user query &lt;em&gt;a-la&lt;/em&gt; Google, Bing, etc. Many candidate documents need to
+be scored as quickly as possible, and the top &lt;em&gt;k&lt;/em&gt; results returned to
+the user.&lt;/p&gt;
+&lt;p&gt;Here, we&amp;#39;ll focus on on a few methods to improve the performance of
+evaluating an ensemble of decision trees - encompassing random
+forests, gradient boosted decision trees, AdaBoost, etc.&lt;/p&gt;
+&lt;p&gt;There are three methods we&amp;#39;ll focus on here:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Recursive tree walking (&lt;em&gt;naive&lt;/em&gt;)&lt;/li&gt;
+&lt;li&gt;Flattening the decision tree (&lt;em&gt;flattened&lt;/em&gt;)&lt;/li&gt;
+&lt;li&gt;Compiling the tree to machine code (&lt;em&gt;compiled&lt;/em&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We&amp;#39;ll show that choosing the right strategy can improve evaluation
+time by more than 2x - which can be a very significant performance
+improvement indeed.&lt;/p&gt;
+&lt;p&gt;All code (implementation, drivers, analysis scripts) are available on
+GitHub at the &lt;a href=&quot;https://github.com/ajtulloch/decisiontree-performance&quot;&gt;decisiontrees-performance&lt;/a&gt; repository.&lt;/p&gt;
+&lt;h2 id=&quot;naive-method&quot;&gt;Naive Method&lt;/h2&gt;
+&lt;p&gt;Superficially, &lt;a href=&quot;http://en.wikipedia.org/wiki/Decision_tree&quot;&gt;decision tree&lt;/a&gt; evaluation is fairly simple - given a
+feature vector, recursively walk down the tree, using the given
+feature vector to choose whether to proceed down the left branch or
+the right branch at each point.  When we reach a leaf, we just return
+the value at the leaf.&lt;/p&gt;
+&lt;p&gt;In Haskell,&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7749394.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;In C++,&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7749384.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;From now on, we&amp;#39;ll focus on the C++ implementation, and how we can
+speed this up.&lt;/p&gt;
+&lt;p&gt;This approach has a few weaknesses - data cache behavior is
+pretty-much the worst case, since we&amp;#39;re jumping all over our memory to
+go from one node to the next.  Given the cost of cache misses on
+modern CPU architectures, we&amp;#39;ll most likely see some performance
+improvements from optimizing this approach.&lt;/p&gt;
+&lt;h2 id=&quot;flattened-tree-method&quot;&gt;Flattened Tree Method&lt;/h2&gt;
+&lt;p&gt;A nice trick to improve cache locality is to lay out data out in a
+flattened form, and jumping in between locations in our flattened
+representation. This is analogous to
+&lt;a href=&quot;http://en.wikipedia.org/wiki/Binary_heap#Heap_implementation&quot;&gt;representing a binary heap as an array&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The technique is just to flatten the tree out, and so moving from the
+parent to the child in our child will often mean accessing memory in
+the same cache line - and given the cost of cache misses on modern CPU
+architectures, minimizing these can lead to significant performance
+improvements.  Thus our&lt;/p&gt;
+&lt;p&gt;We implement two strategies along this approach:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;Piecewise flattened&lt;/em&gt;, where for an ensemble of weak learners, we
+store a vector of flattened trees - with one element for each weak learner.&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Contiguous flattened&lt;/em&gt;, where we concatenate the flattened
+ representation of each weak learner into a single vector, and store
+ the indices of the root of each learner.  In some circumstances,
+ this may improve cache locality even more, though we see that it is
+ outperformed in most circumstances by the piecewise flattened approach.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Our implementation is given below:&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7749947.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;compiled-tree-method&quot;&gt;Compiled Tree Method&lt;/h2&gt;
+&lt;p&gt;A really cool technique that has been known for years is generating C
+code representing a decision tree, compiling it into a shared library,
+and then loading the compiled decision tree function via &lt;code&gt;dlopen(3)&lt;/code&gt;.
+I found &lt;a href=&quot;http://courses.cs.washington.edu/courses/cse501/10au/compile-machlearn.pdf&quot;&gt;a 2010 UWash student report&lt;/a&gt;
+describing this technique, though the earliest reference I&amp;#39;ve seen is
+from approximately 2000 in a presentation on Alta Vista&amp;#39;s machine
+learning system (which I unfortunately cannot find online).&lt;/p&gt;
+&lt;p&gt;The gist of this approach is to traverse the trees in the ensemble,
+generating C code as we go. For example, if a regression stump has the
+logic &amp;quot;return 0.02 if feature 5 is less than 0.8, otherwise return
+0.08.&amp;quot;, we would generate the code:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;float evaluate(float* feature_vector) {
+  if (feature_vector[5] &amp;lt; 0.8) {
+    return 0.02;
+  } else {
+    return 0.08;
+  }
+}&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;For example, here is the code generated by a randomly constructed
+ensemble with two trees:&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7754969.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;The core C++ function used to generate this is given below:&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7755257.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;For evaluation, we just use the &lt;code&gt;dlopen&lt;/code&gt; and &lt;code&gt;dlsym&lt;/code&gt; to extract a
+function pointer from the generated &lt;code&gt;.so&lt;/code&gt; file.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7755126.js&quot;&gt;&lt;/script&gt;
+
+
+&lt;p&gt;We can examine the evaluation time of each strategy at a fixed tree depth
+and number of features, and see that at these levels, we have that the
+compiled strategy is significantly faster.  Note that strategies scale
+roughly linearly in the number of weak learners, as expected.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/articles/decision-tree-evaluation/all_snapshot.png&quot; alt=&quot;Evaluation time of different strategies for fixed depth and number of features&quot;&gt;&lt;/p&gt;
+&lt;h2 id=&quot;performance-evaluation&quot;&gt;Performance Evaluation&lt;/h2&gt;
+&lt;p&gt;As &lt;a href=&quot;http://courses.cs.washington.edu/courses/cse501/10au/compile-machlearn.pdf&quot;&gt;the student report&lt;/a&gt; indicates, the
+relative performance of each strategy depends on the size of the
+trees, the number of trees, and the number of features in the given
+feature vector.&lt;/p&gt;
+&lt;p&gt;Our methodology is to generate a random ensemble with a given depth,
+number of trees, and number of features, construct the evaluators of
+this tree for each strategy, and measure the evaluation time of each
+strategy across a set of randomly generated feature vectors. (We also
+check correctness of the implementations via a &lt;a href=&quot;http://en.wikipedia.org/wiki/QuickCheck&quot;&gt;QuickCheck&lt;/a&gt; style
+test that each strategy computes the same result for a given feature vector).&lt;/p&gt;
+&lt;p&gt;\begin{align}
+  \text{num_trees} &amp;amp;\in [1, 1000] \\
+  \text{depth} &amp;amp;\in [1, 6] \\
+  \text{num_features} &amp;amp;\in [1, 10000]
+\end{align}&lt;/p&gt;
+&lt;h3 id=&quot;visualization&quot;&gt;Visualization&lt;/h3&gt;
+&lt;p&gt;We look at trellis plots of the evaluation time against number of
+trees, for the various evaluation strategies.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;/articles/decision-tree-evaluation/subset_trellis.png&quot;&gt;&lt;img src=&quot;/articles/decision-tree-evaluation/subset_trellis.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The following diagram is the entire parameter space explored (click
+for more detail).&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;/articles/decision-tree-evaluation/all_trellis.png&quot;&gt;&lt;img src=&quot;/articles/decision-tree-evaluation/all_trellis.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&quot;regression&quot;&gt;Regression&lt;/h3&gt;
+&lt;p&gt;To quantify these effects on the cost of evaluation for the different
+algorithms, we fit a linear model against these covariates,
+conditioned on the algorithm used. Conceptually, we are just splitting
+our dataset by the algorithm used, and fitting a separate linear model
+on each of these subsets.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7755272.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;(as an aside - the R formula syntax is a great example of a DSL done
+right.)&lt;/p&gt;
+&lt;p&gt;We see $R^2$ values ~0.75-0.85 with all coefficients, with almost all coefficients
+statistically different from zero at the 0.1% level - so we can draw
+some provisional inferences from this model.&lt;/p&gt;
+&lt;p&gt;We note:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;the compiled tree strategy is much more sensitive to the depth of
+the decision tree, which aligns with observations made in
+&lt;a href=&quot;http://courses.cs.washington.edu/courses/cse501/10au/compile-machlearn.pdf&quot;&gt;the student report&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;the compiled tree strategy and the naive strategy are also more
+sensitive to the number of trees than the flattened evaluation
+strategy.  Thus for models with huge numbers of trees, the flattened
+evaluation may be the best.&lt;/li&gt;
+&lt;li&gt;The intercept term for the compiled tree is the most negative - thus
+for &amp;#39;small&amp;#39; models - low number of trees of small depth, the
+compiled tree approach may be the best evaluation strategy.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7792639.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;conclusions&quot;&gt;Conclusions&lt;/h2&gt;
+&lt;p&gt;We&amp;#39;ve implemented and analyzed the performance of a selection of
+decision tree evaluation strategies. It appears there are two main
+conclusions:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;For small models - &amp;lt;200 or so trees with average depth &amp;lt;2, the
+compiled evaluation strategy is the fastest.&lt;/li&gt;
+&lt;li&gt;For larger models, the piecewise flattened evaluation strategy is
+most likely the fastest.&lt;/li&gt;
+&lt;li&gt;Choosing the right evaluation strategy can, in the right places,
+improve performance by greater than 2x.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Next, I&amp;#39;ll look at implementing these methods in some commonly used
+open-source ML packages, such as &lt;a href=&quot;http://scikit-learn.org/stable/&quot;&gt;scikit-learn&lt;/a&gt;.&lt;/p&gt;
+</description></item><item><title>Online Learning with Microsoft's AdPredictor algorithm</title><link>https://tullo.ch/articles/online-learning-with-adpredictor/</link><pubDate>Sat, 30 Nov 2013 00:00:00 -0800</pubDate><guid isPermaLink="true">https://tullo.ch/articles/online-learning-with-adpredictor/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;Online learning (as opposed to more traditional batched machine
+learning) is more and more commonly applied to training machine
+learned models at scale. The chief advantage is that the model is
+trained via a streaming approach, and thus the entire dataset used
+when training does not need to be held in memory at any given time.&lt;/p&gt;
+&lt;p&gt;That is to say, we can consider that a model parameters have a current
+state $\mathbf{w}$, and we observe our examples $(y, \mathbf{x})$ with
+($y$ the label and $x$ the features of the given example) in a
+streaming fashion. At each example, we update our weights from the
+given example, and these weights are used as a starting point.&lt;/p&gt;
+&lt;p&gt;Microsoft&amp;#39;s &lt;a href=&quot;http://research.microsoft.com/pubs/122779/adpredictor%20icml%202010%20-%20final.pdf&quot;&gt;AdPredictor&lt;/a&gt; model from ICML 2010 is an online learning
+model that has been successfully applied in the context of click
+prediction for online advertising.&lt;/p&gt;
+&lt;p&gt;Here, we&amp;#39;ll implement the AdPredictor algorithm (in Python), and
+demonstrate how online learning works via visualizations of the
+trained parameters $\mathbf{w}$.&lt;/p&gt;
+&lt;h2 id=&quot;the-adpredictor-algorithm&quot;&gt;The AdPredictor Algorithm&lt;/h2&gt;
+&lt;p&gt;From the paper&amp;#39;s abstract,&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;We describe a new Bayesian click-through rate (CTR) prediction
+algorithm used for Sponsored Search in Microsoft’s Bing search engine.
+The algorithm is based on a probit regression model that maps discrete
+or real-valued input features to probabilities. It maintains Gaussian
+beliefs over weights of the model and performs Gaussian online updates
+derived from approximate message passing. Scalability of the algorithm
+is ensured through a principled weight pruning procedure and an
+approximate parallel implementation. We discuss the challenges arising
+from evaluating and tuning the predictor as part of the complex system
+of sponsored search where the predictions made by the algorithm decide
+about future training sample composition. Finally, we show
+experimental results from the production system and compare to a
+calibrated Naïve Bayes algorithm.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;The online &lt;a href=&quot;http://en.wikipedia.org/wiki/Probit_model&quot;&gt;probit regression&lt;/a&gt; model described in the paper is
+superficially similar to the more commonly known &lt;a href=&quot;https://en.wikipedia.org/wiki/Logistic_regression&quot;&gt;logistic regression&lt;/a&gt;,
+with sampling distribution of the model given by&lt;/p&gt;
+&lt;p&gt;\begin{align}
+  P(y = +1 , | , \mathbf{x}, \mathbf{w}) = \Phi \left( \frac{\langle
+  \mathbf{w}, \mathbf{x} \rangle}{\beta} \right)
+\end{align}&lt;/p&gt;
+&lt;p&gt;where $\mathbf{w}$ are the set of weights, $\mathbf{x}$
+are the set of features for the given event, $\beta$ is a model
+hyper-parameter, and $\Phi$ is the CDF of the normal distribution.&lt;/p&gt;
+&lt;p&gt;The weights $w_{i, j}$ are Gaussian distributed, with mean
+$\mu_{i,j}$ and variance $\sigma^2_{i, j}$ (where $i$ indexes over
+features and $j$ indexes over the values for the feature).&lt;/p&gt;
+&lt;p&gt;The paper then proceeds to construct the &lt;a href=&quot;http://en.wikipedia.org/wiki/Graphical_model&quot;&gt;graphical model&lt;/a&gt; show in
+Figure 1 of the paper, and derive the approximate update equations
+from message passing in the factor graph.  The update equations are&lt;/p&gt;
+&lt;p&gt;\begin{align}
+  \mu_{i, j} &amp;amp;\leftarrow \mu_{i, j} + y \cdot x_{i, j} \cdot
+  \frac{\sigma^{2}_{i, j}}{\Sigma} \cdot v \left(\frac{y \cdot \langle
+  \mathbf{x}, \mathbf{\mu} \rangle}{\Sigma} \right) \\
+  \sigma^{2}_{i, j} &amp;amp;\leftarrow \sigma^{2}_{i, j} \left(1 - x_{i, j}
+  \cdot \frac{\sigma^{2}_{i, j}}{\sigma^{2}} \cdot w \left(\frac{y \cdot
+  \langle \mathbf{x}, \mathbf{\mu} \rangle}{\Sigma} \right) \right)
+\end{align}&lt;/p&gt;
+&lt;p&gt;where $\Sigma^{2} = \beta^{2} + \langle \mathbf{x},
+\mathbf{\sigma^{2}} \rangle$ represents the &amp;#39;total variance&amp;#39; of the sample,
+$v(t) = \frac{\phi(t)}{\Phi(t)}$ and $w(t) = v(t) \cdot (v(t) + t)$
+represent the additive and multiplicative corrections to the truncated
+Gaussian, with $\phi, \Phi$ being the PDF and CDF, respectively, of
+the Normal distribution.&lt;/p&gt;
+&lt;p&gt;For further details on the derivation of this equation, see the
+&lt;a href=&quot;http://research.microsoft.com/pubs/122779/adpredictor%20icml%202010%20-%20final.pdf&quot;&gt;AdPredictor&lt;/a&gt; paper and the &lt;a href=&quot;http://research.microsoft.com/pubs/67956/NIPS2006_0688.pdf&quot;&gt;TrueSkill&lt;/a&gt; paper by the same authors
+describing a similar algorithm, though with a more detailed treatment
+of the underlying mathematics.&lt;/p&gt;
+&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
+&lt;p&gt;The implementation is quite straightforward - see the example code in the
+&lt;a href=&quot;https://github.com/ajtulloch/adpredictor&quot;&gt;AdPredictor repository&lt;/a&gt; on GitHub for more information.&lt;/p&gt;
+&lt;p&gt;The main body of the code is inlined below.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7724979.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;It&amp;#39;s a fairly straightforward implementation of the equations
+described previously. This approach doesn&amp;#39;t deal at all with
+distributed/parallelized inference, though that can be fairly nicely
+incorporated into the AdPredictor framework as described in the
+original paper.&lt;/p&gt;
+&lt;h2 id=&quot;demonstration&quot;&gt;Demonstration&lt;/h2&gt;
+&lt;p&gt;We&amp;#39;ll now test our implementation with a few demonstrations of the
+model learning a ground truth in an online fashion.&lt;/p&gt;
+&lt;p&gt;To replicate these demonstrations, just run the following lines in
+your terminal:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;$ git clone https://github.com/ajtulloch/adpredictor
+$ cd adpredictor
+$ virtualenv env &amp;amp;&amp;amp; source env/bin/activate
+$ make demo&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The setting is a simple one - we have five features (including the
+bias), each with ten possible values (so fourty-one Gaussian weights
+$w_{i, j}$ in total are tracked). Of these features, we set one
+weight to have a ground truth of having a strongly positive effect
+($\mu_{i, j} &amp;gt; 0$),
+and one to have a strongly negative effect ($\mu_{i, j} &amp;lt; 0$). These are labelled &amp;#39;+&amp;#39; and
+&amp;#39;-&amp;#39; in the graphs below.  All other weights have zero effect
+($\mu_{i, j} = 0$).&lt;/p&gt;
+&lt;p&gt;The first demonstration illustrates how the weights are lazily
+initialized and our Gaussian beliefs begin converging to the ground
+truth.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/articles/online-learning-with-adpredictor/initial_learning.gif&quot; alt=&quot;Initial learning of the weights&quot;&gt;&lt;/p&gt;
+&lt;p&gt;As the number of examples seen by the predictor increases, the weights
+stabilize at their ground truth values.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/articles/online-learning-with-adpredictor/convergence_learning.gif&quot; alt=&quot;Convergence of the weights to ground truth&quot;&gt;&lt;/p&gt;
+&lt;p&gt;Finally, we demonstrate the power of online learning by adjusting the
+ground truth and seeing how our model adapts in real time. This can
+happen naturally in an online advertising - perhaps a datasource
+providing a feature goes down, or a campaign adjusts the
+distribution of users seen by the model.  Being able to adapt in real
+time is a very powerful advantage offered by online learned ML models.&lt;/p&gt;
+&lt;p&gt;Here, we simulate this by removing the adjustments to the two weights
+mentioned above, so all weights have ground truth $\mu_{i, j} = 0$.
+This adjustment takes place after $N = 200$ examples have been seen.
+We see the model rapidly learns the modified ground truth, as desired.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/articles/online-learning-with-adpredictor/online_learning.gif&quot; alt=&quot;Online learning as ground truth is adjusted&quot;&gt;&lt;/p&gt;
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;We&amp;#39;ve introduced, implemented, and visualized the AdPredictor model
+for online learning.
+There are &lt;a href=&quot;http://www.cs.berkeley.edu/~jduchi/projects/DuchiHaSi10.pdf&quot;&gt;many&lt;/a&gt; &lt;a href=&quot;http://people.cs.uchicago.edu/~kalai/papers/onlineopt/onlineopt.pdf&quot;&gt;other&lt;/a&gt; &lt;a href=&quot;http://jmlr.org/proceedings/papers/v15/mcmahan11b/mcmahan11b.pdf&quot;&gt;approaches&lt;/a&gt; that are worth exploring
+in future posts.&lt;/p&gt;
+</description></item><item><title>A basic soft-margin kernel SVM implementation in Python</title><link>https://tullo.ch/articles/svm-py/</link><pubDate>Tue, 26 Nov 2013 00:00:00 -0800</pubDate><guid isPermaLink="true">https://tullo.ch/articles/svm-py/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;&lt;a href=&quot;http://en.wikipedia.org/wiki/Support_vector_machine&quot;&gt;Support Vector Machines&lt;/a&gt; (SVMs) are a family of nice supervised learning
+algorithms that can train classification and regression models
+efficiently and with very good performance in practice.&lt;/p&gt;
+&lt;p&gt;SVMs are also rooted in convex optimization and Hilbert space theory,
+and there is a lot of beautiful mathematics in the derivation of
+various aspects of the training algorithm, which we will go into in
+subsequent posts.&lt;/p&gt;
+&lt;p&gt;For now, we&amp;#39;ll just give an introduction to the basic theory of
+soft-margin kernel SVMs. The classical treatment is to start with
+hard-margin linear SVMs, then introduce the kernel trick and the
+soft-margin formulation, so this is somewhat faster-moving than other
+presentations.&lt;/p&gt;
+&lt;h2 id=&quot;mathematical-formulation&quot;&gt;Mathematical Formulation&lt;/h2&gt;
+&lt;p&gt;We consider our training set to be&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+D = { (\mathbf{x}_{i}, y_{i}), \mathbf{x} \in \mathbb{R}^d, y \in \{ -1, 1 \}
+}.
+\end{equation}&lt;/p&gt;
+&lt;p&gt;The key idea is that we seek to find a hyperplane $w$ separating
+our data - and maximimize the &lt;em&gt;margin&lt;/em&gt; of this hyperplane to optimize
+decision-theoretic metrics.&lt;/p&gt;
+&lt;p&gt;Let $\kappa$ be a kernel function on $\mathbb{R}^d \times
+\mathbb{R}^d$ - a function such that the matrix $K$ with $K_{ij} =
+\kappa(x_i, x_j)$ is positive semidefinite.  A key property of such
+kernel functions is that there exists a map $\nu$ such that $\langle
+\nu(x), \nu(y) \rangle = \kappa(x, y)$.  One can think of $\nu$ as
+mapping our input features into a higher dimensional output space.&lt;/p&gt;
+&lt;p&gt;We can show that for a given feature mapping $\nu$ satisfying the
+previous condition, the Lagrangian for the problem of finding the
+maximum margin hyperplane takes the form:&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+\inf_{z \in \mathbb{R}^n} \frac{1}{2} \left| \sum_{i=1}^{n} y_i \nu(x_i)
+z_i \right|_2^2 - e^T z
+\end{equation}
+subject to $z \geq 0$ and $\langle z, y \rangle = 0$.&lt;/p&gt;
+&lt;p&gt;Given a resulting vector of Lagrange multipliers $z$, we find that
+most $z$ are zero. This comes from the complementary slackness
+conditions in our optimization problem - either $(x_i, y_i)$ is on the
+maximum margin (and so corresponding Lagrange multiplier is nonzero),
+or it is not on the margin (and so the Lagrange multiplier is zero).&lt;/p&gt;
+&lt;p&gt;The prediction of a given feature vector $x$ takes the form
+\begin{align}
+  \label{eq:1}
+  \langle w, \nu(x) \rangle &amp;amp;= \sum_{i=1}^{n} z_{i} y_{i} \langle \nu(x_{i}),
+  \nu(x) \rangle \
+  &amp;amp;= \sum_{i=1}^{n} z_{i} y_{i} \kappa(x_{i}, x)
+\end{align} where we can take the sum over only the non-zero $z_{i}$.&lt;/p&gt;
+&lt;p&gt;This yields a very efficient prediction algorithm - once we have
+trained our SVM, a large amount of the training data (those samples
+with zero Lagrangian multipliers) can be removed.&lt;/p&gt;
+&lt;p&gt;There are more complications (handling the bias term, handling
+non-separable datasets), but this is the gist of the algorithm.&lt;/p&gt;
+&lt;h2 id=&quot;implementation&quot;&gt;Implementation&lt;/h2&gt;
+&lt;p&gt;The full implementation of the training (using &lt;a href=&quot;http://cvxopt.org/&quot;&gt;&lt;code&gt;cvxopt&lt;/code&gt;&lt;/a&gt; as a
+quadratic program solver) in Python is given below:&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7655363.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;The code is fairly self-explanatory, and follows the given training
+algorithm quite closely.  To compute our Lagrange multipliers, we
+simply construct the Gram matrix and solve the given QP.  We then pass
+our trained support vectors and their corresponding Lagrange
+multipliers and weights to the &lt;code&gt;SVMPredictor&lt;/code&gt;, whose implementation is
+given below.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7655399.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;This simply implements the above prediction equation.&lt;/p&gt;
+&lt;p&gt;A sample list of kernel functions are given in&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7655415.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;demonstration&quot;&gt;Demonstration&lt;/h2&gt;
+&lt;p&gt;We demonstrate drawing pairs of independent standard normal variables
+as features, and label $y_i = sign(\sum x)$.  This is trivially
+linearly seperable, so we train a linear SVM (where $\kappa(x_i, x_j) =
+\langle x_i, x_j \rangle$) on the sample data.&lt;/p&gt;
+&lt;p&gt;We then visualize the samples and decision boundary of the SVM on this
+dataset, using &lt;a href=&quot;http://matplotlib.org/&quot;&gt;&lt;code&gt;matplotlib&lt;/code&gt;&lt;/a&gt;. See &lt;a href=&quot;https://gist.github.com/ajtulloch/7655467&quot;&gt;this gist&lt;/a&gt; for
+details on the implementation.&lt;/p&gt;
+&lt;p&gt;An example output of this demonstration is given below:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/yy0oUVk.png&quot; alt=&quot;SVM Demonstration&quot;&gt;&lt;/p&gt;
+&lt;h2 id=&quot;more-information&quot;&gt;More Information&lt;/h2&gt;
+&lt;p&gt;See the &lt;a href=&quot;https://github.com/ajtulloch/svmpy&quot;&gt;&lt;code&gt;svmpy&lt;/code&gt;&lt;/a&gt; library on GitHub for all code used in this post.&lt;/p&gt;
+</description></item><item><title>Consistency of M-estimators</title><link>https://tullo.ch/articles/consistency-of-m-estimators/</link><pubDate>Sun, 03 Nov 2013 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/consistency-of-m-estimators/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;Let $\Theta \subseteq \mathbb{R}^{p}$ be compact. Let $Q: \Theta \rightarrow
+\mathbb{R}$ be a continuous, non-random function that has a unique minimizer
+$\theta_{0} \in \Theta$.&lt;/p&gt;
+&lt;p&gt;Let $Q_{n}: \Theta \rightarrow \mathbb{R}$ be any sequence of random
+functions such that&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+  \sup_{\theta \in \Theta} |Q_{n}(\theta) - Q(\theta)| \rightarrow 0
+\end{equation}
+as $n \rightarrow \infty$.&lt;/p&gt;
+&lt;p&gt;If $\theta_{n}$ is &lt;em&gt;any&lt;/em&gt; sequence of minimizers of $Q_{n}$,
+then $\hat \theta_{n} \rightarrow \theta_{0}$ in probability as $n \rightarrow \infty$.&lt;/p&gt;
+</description></item><item><title>Speeding up Decision Tree Training</title><link>https://tullo.ch/articles/speeding-up-decision-tree-training/</link><pubDate>Sun, 03 Nov 2013 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/speeding-up-decision-tree-training/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;The classic algorithm for training a decision tree for
+classification/regression problems (CART) is well known. The
+underlying algorithm acts by recursively partitioning the dataset into
+subsets that maximize the &amp;#39;clustering&amp;#39; of examples in each of the
+partitioned subsets, where the metric used for clustering varies
+depending on the problem (for example, information gain, Gini loss,
+etc, have been used successfully in the literature).&lt;/p&gt;
+&lt;p&gt;For a high level overview of the algorithm, see the following snippet
+of &lt;a href=&quot;https://github.com/ajtulloch/haskell-ml/blob/master/MachineLearning/DecisionTrees.hs&quot;&gt;Haskell code&lt;/a&gt; code from the &lt;a href=&quot;https://github.com/ajtulloch/haskell-ml/&quot;&gt;haskell-ml project&lt;/a&gt; project.&lt;/p&gt;
+&lt;span class=&quot;more&quot;/&gt;
+
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7295132.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;This is the simplest possible implementation - for each possible
+feature, we sort the (label, feature) pairs and compute the optimal
+splitting point for each feature, according to our decision metric. We
+then take the &amp;#39;best&amp;#39; possible split, split the examples by that point,
+record that we split the current node at the given feature and value,
+and recur down the left and right sides.&lt;/p&gt;
+&lt;p&gt;The inner loop of the algorithm (in Python) is as follows (function
+&lt;code&gt;get_best_split&lt;/code&gt;):&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7295006.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;The complexity of this naive implementation is $\mathcal{O}(F \cdot
+E^3 \log E)$ - where $F$ are the number of features and $E$ is the
+number of examples. This is because we loop over the features $(|F|)$,
+sort the examples ($\mathcal{O}(E \log E)$) then over each example
+($|E|$), and computing the loss from partitioning at the given example
+takes $\mathcal{O}(E)$ time.&lt;/p&gt;
+&lt;p&gt;It is important to note that this can be incredibly slow (consider
+when we have $\mathcal{O}(10^4)$ features and $\mathcal{O}(10^{10})$
+examples). There are several well-known ways we can speed this up.&lt;/p&gt;
+&lt;h2 id=&quot;speeding-up-decision-tree-training&quot;&gt;Speeding up decision tree training&lt;/h2&gt;
+&lt;p&gt;There are several ways we can make this process faster.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Incrementally updating the gain at a given split instead of
+recomputing the update.&lt;/li&gt;
+&lt;li&gt;Parallelizing recursive tree construction steps.&lt;/li&gt;
+&lt;li&gt;For gradient boosting, we can trim low-importance samples
+(&lt;em&gt;influence trimming&lt;/em&gt;), or just consider only a subset (&lt;em&gt;stochastic
+gradient boosting&lt;/em&gt;).&lt;/li&gt;
+&lt;li&gt;Considering only a random subset of features and examples at each
+iteration - as in &lt;em&gt;random forests&lt;/em&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We&amp;#39;ll go through these in turn, with code examples from the
+&lt;a href=&quot;https://github.com/ajtulloch/decisiontrees&quot;&gt;decisiontrees library&lt;/a&gt; on GitHub - a backend and frontend for
+training gradient boosted decision trees, random forests, etc. written
+in Go. In particular, the &lt;a href=&quot;https://github.com/ajtulloch/decisiontrees/blob/master/regression_splitter.go&quot;&gt;&lt;code&gt;regression_splitter.go&lt;/code&gt;&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ajtulloch/decisiontrees/blob/master/random_forest.go&quot;&gt;&lt;code&gt;random_forest.go&lt;/code&gt;&lt;/a&gt;, and &lt;a href=&quot;https://github.com/ajtulloch/decisiontrees/blob/master/boosting.go&quot;&gt;&lt;code&gt;boosting.go&lt;/code&gt;&lt;/a&gt; files are where a
+lot of these techniques are implemented.&lt;/p&gt;
+&lt;h3 id=&quot;incrementally-computing-the-loss&quot;&gt;Incrementally computing the loss&lt;/h3&gt;
+&lt;p&gt;A simple optimization can take the computation of the loss at any
+given point from $\mathcal{O}(E)$ to $\mathcal{O}(1)$ for a large set
+of loss functions. Consider the case where we minimize $L^2$ loss on
+the splits. Thus, the loss on a given subset is
+\begin{equation}
+L(S) = \sum_{s \in S} (s - \overline S)^{2}
+\end{equation}&lt;/p&gt;
+&lt;p&gt;By using the online update formula for the variance of a set of
+samples - which for a stream of samples $x_{1}, \dots, x_{n}$,
+allows us to compute the variance of $\mathbb{V}(x_{1}, \dots,
+x_{n+1}) = \mathbb{V}_{n+1}$ given $\mathbb{V}_{n}$ and the value
+$x_{n+1}$ in constant time and space by tracking $\sum_{i=1}^{n}
+x_{i}^{2}$ and $\sum_{i=1}^{n} x_{i}$.&lt;/p&gt;
+&lt;p&gt;See below for the implementation of this approach for $L^2$ loss.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7293348.js&quot;&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;parallelizing-recursive-tree-construction-steps&quot;&gt;Parallelizing recursive tree construction steps&lt;/h3&gt;
+&lt;p&gt;Note that once we have decided to split at a given node, there is no
+data sharing between the procedures that compute the left side of the
+tree and the right side of the tree. Thus, we can compute these in
+parallel, and can speed up computation significantly on systems with
+multiple CPUs - asymptotically up to $B$ times faster where $B$ is the
+branching factor on our branch.&lt;/p&gt;
+&lt;p&gt;See below for an implementation of this approach.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7293383.js&quot;&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;parallelizing-finding-the-optimal-split&quot;&gt;Parallelizing finding the optimal split&lt;/h3&gt;
+&lt;p&gt;The key insight here is that finding the best split amongst $|F|$
+features can be done by forking $|F|$ processes to search through each
+features possible splits in parallel, then joining and finding the
+best candidate split from each subroutine.&lt;/p&gt;
+&lt;p&gt;The tradeoff in this approach is that $|F|$ copies of the examples
+must be passed to each subroutine - as the subroutines sort these
+examples which requires ownership of a copy of the data. If we just
+pass a cheap copy of pointers to the examples (e.g.
+&lt;code&gt;std::vector&amp;lt;Example*&amp;gt;&lt;/code&gt; in &lt;code&gt;C++&lt;/code&gt;), we can easily reduce this cost.
+This speedup depends on the relative sizes of $|F|$ and $|E|$ and the
+cost of memory allocation in the given system, but is in general a
+significant speedup.&lt;/p&gt;
+&lt;p&gt;See below for an example implementation in Go, using channels to
+communicate splits back to the master thread.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7293393.js&quot;&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;influence-trimming-and-stochastic-gradient-boosting&quot;&gt;Influence Trimming and Stochastic Gradient Boosting&lt;/h3&gt;
+&lt;p&gt;In gradient boosting (and boosting algorithms in general), we weight
+examples by their degree of misclassification by the ensemble thus
+far. The intuition is that each incremental stage is &amp;quot;trained on the
+residuals&amp;quot; of the previous stage.&lt;/p&gt;
+&lt;p&gt;At each stage, we compute a weight metric for each example $w_i$,
+representing the influence of a given sample of the next stage. In
+practice, the distribution of influence over examples follows a power
+law, so trimming the bottom $l_\alpha$ samples, where
+\begin{equation} \sum_{i=1}^{l_{\alpha}} w_{i} = \alpha
+\sum_{i=1}^{N} w_{i} \end{equation} for $\alpha$ between 5% and 20%
+can remove a large fraction of samples&lt;/p&gt;
+&lt;p&gt;In the &lt;a href=&quot;http://statweb.stanford.edu/~jhf/ftp/trebst.pdf&quot;&gt;paper&lt;/a&gt; introducing gradient boosting, Friedman notes that up
+to 90%-95% of examples at later stages can be reduced without a
+measurable loss in accuracy.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7292976.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;In a &lt;a href=&quot;http://statweb.stanford.edu/~jhf/ftp/stobst.pdf&quot;&gt;follow up paper&lt;/a&gt; to the initial gradient boosting machine
+paper, Friedman introduces stochastic gradient boosting - at each
+iteration, select a random subset of examples for the construction of
+the next weak learner. Friedman&amp;#39;s experiments indicated that 20%-50%
+of examples can be dropped at any given stage without a significant
+loss in the quality of the ensemble. Given the dependence on the
+number of examples on the time spent training, this can be a useful
+improvement.&lt;/p&gt;
+&lt;p&gt;See the following code for the implementation of a boosting round:&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7292981.js&quot;&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;random-forests&quot;&gt;Random Forests&lt;/h3&gt;
+&lt;p&gt;When using &lt;a href=&quot;https://en.wikipedia.org/wiki/Random_forest#Breiman.27s_Algorithm&quot;&gt;Brieman&amp;#39;s algorithm&lt;/a&gt; to train random forests, there are
+several key speedups over naive ensemble construction:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;For each weak classifier, choose the best splits with $m \ll |F|$
+features, and a boostrap sample of size $n &amp;lt; |E|$ examples.&lt;/li&gt;
+&lt;li&gt;Each weak classifier is trained independently of the others (as
+opposed to gradient boosting), and so can be trivially parallelized.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For example, see the following code that uses Golang&amp;#39;s convenient
+&lt;a href=&quot;http://golang.org/pkg/sync/#WaitGroup&quot;&gt;&lt;code&gt;sync.WaitGroup&lt;/code&gt;&lt;/a&gt; abstraction for computing the weak learners in
+parallel.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7292836.js&quot;&gt;&lt;/script&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;We&amp;#39;ve talked about a number of methods that can be used for evaluation
+time improvement. Please have a look at the &lt;a href=&quot;https://github.com/ajtulloch/decisiontrees&quot;&gt;decisiontrees library&lt;/a&gt;
+for an integrated view of how these are implemented. In subsequent
+posts, we&amp;#39;ll talk about the other side of the equation - speeding up
+evaluation of decision trees.&lt;/p&gt;
+</description></item><item><title>The Ito isometry</title><link>https://tullo.ch/articles/the-ito-isometry/</link><pubDate>Sun, 03 Nov 2013 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/the-ito-isometry/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;The &lt;em&gt;Itō isometry&lt;/em&gt; is a useful theorem in stochastic calculus that
+provides a fundamental tool in computing stochastic integrals -
+integrals with respect to a Brownian motion \begin{equation}
+\int_{0}^{\infty} f(s) dB_{s} \end{equation} with $B_{s}$ a
+Brownian motion.&lt;/p&gt;
+&lt;p&gt;First, we&amp;#39;ll define a predictable process.&lt;/p&gt;
+&lt;p&gt;&lt;span class=&quot;more&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;h3 id=&quot;definition&quot;&gt;Definition&lt;/h3&gt;
+&lt;p&gt;A stochastic process $\alpha_{t}$ is called a &lt;em&gt;simple predictable
+process&lt;/em&gt; if it is of the form \begin{equation} \alpha_{t} =
+\sum_{i=1}^{n} \mathbb{I}_{(t _{i-1}, t_{i}]} a_{i}
+\end{equation} for $0 \leq t_{0} &amp;lt; \dots &amp;lt; t_{n}$, with $a_{i}$ a
+bounded $\mathcal{F}_{t_{i-1}}$-measurable random variable.&lt;/p&gt;
+&lt;p&gt;This definition is useful as we can construct sequences of simple
+predictable processes that converge in $L^{2}$ to our stochastic
+processes of interest (under certain technical conditions).&lt;/p&gt;
+&lt;p&gt;The &lt;em&gt;Itō isometry&lt;/em&gt; is the following result&lt;/p&gt;
+&lt;h3 id=&quot;theorem&quot;&gt;Theorem&lt;/h3&gt;
+&lt;p&gt;Let $\alpha_{t}$ be a simple predictable process. Then&lt;/p&gt;
+&lt;p&gt;\begin{equation} \mathbb{E} \left(\int_{0}^{\infty} \alpha_{s}
+  dB_{s} \right)^{2} = \mathbb{E} \int_{0}^{\infty} \alpha_{s}^{2}
+  ds \end{equation}&lt;/p&gt;
+&lt;p&gt;Thus, the mapping from simple predictable process to square integrable
+random variables on $L^{2}(\Omega, \mathcal{F}, \mathbb{P})$ (which is
+complete) defined by \begin{equation} I(\alpha) = \int_{0}^{\infty}
+\alpha_{s} dW_{s} \end{equation} is an isometry.&lt;/p&gt;
+&lt;h3 id=&quot;proof&quot;&gt;Proof&lt;/h3&gt;
+&lt;p&gt;The proof is a fairly straightforward application of the properties of
+the Brownian motion.&lt;/p&gt;
+&lt;p&gt;The expectation of the square of $\alpha_{t}$ becomes a sum of
+expectations on disjoint subsets of
+$[0, \infty)$ (which are zero by the independence of Brownian motion in two intervals), and the sum of the expectation of $a_{i}^{2} (dB_{s})^{2}$ on the interval $(t_{i-1}, t_{i}]$,
+which is $a_{i}^{2} (t_{i} - t_{i-1})$ as the increments of the
+Brownian motion are normally distributed with mean zero and variance
+equal to the size of the interval.&lt;/p&gt;
+</description></item><item><title>Purely Functional Tree Search in Haskell</title><link>https://tullo.ch/articles/haskell-search/</link><pubDate>Fri, 01 Nov 2013 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/haskell-search/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;Haskell is an absolute pleasure to write code in, and I&amp;#39;ve been trying to use it more and more. It&amp;#39;s a language that rewards extended effort in a way that &lt;code&gt;C++&lt;/code&gt; et. al. do not.&lt;/p&gt;
+&lt;p&gt;Consider the following program, illustrating a basic BFS/DFS search through a tree in Haskell.  It illustrates a number of useful concepts - &lt;a href=&quot;http://www.haskell.org/haskellwiki/Algebraic_data_type&quot;&gt;algebraic data types&lt;/a&gt;, &lt;a href=&quot;https://en.wikipedia.org/wiki/Type_class&quot;&gt;type classes&lt;/a&gt;, and &lt;a href=&quot;http://en.wikipedia.org/wiki/QuickCheck&quot;&gt;QuickCheck&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;span class=&quot;more&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;The code is straightforward (as Haskell code tends to be) - we define our basic tree structure, describe some type classes it belongs to, and traverse the tree.&lt;/p&gt;
+&lt;p&gt;e&lt;script src=&quot;https://gist.github.com/ajtulloch/7236639.js&quot;&gt;&lt;/script&gt;&lt;/p&gt;
+&lt;h2 id=&quot;quickcheck&quot;&gt;QuickCheck&lt;/h2&gt;
+&lt;p&gt;Assume there was a bug in our code - for example, we replace an &lt;code&gt;||&lt;/code&gt; with an &lt;code&gt;&amp;amp;&amp;amp;&lt;/code&gt; in our &lt;code&gt;search&lt;/code&gt; function, going from&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7236642.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;to&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7236654.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;Running this incorrect program, QuickCheck immediately identifies the minimal example for which this program fails.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7236669.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;See the &lt;a href=&quot;http://book.realworldhaskell.org/read/testing-and-quality-assurance.html&quot;&gt;chapter&lt;/a&gt; on QuickCheck and other forms of testing in &lt;a href=&quot;http://book.realworldhaskell.org/&quot;&gt;Real World Haskell&lt;/a&gt; for more information.&lt;/p&gt;
+</description></item><item><title>A Primer on Gradient Boosted Decision Trees</title><link>https://tullo.ch/articles/gradient-boosted-decision-trees-primer/</link><pubDate>Mon, 11 Mar 2013 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/gradient-boosted-decision-trees-primer/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;Gradient boosted decision trees are an effective off-the-shelf method
+for generating effective models for classification and regression
+tasks.&lt;/p&gt;
+&lt;p&gt;Gradient boosting is a generic technique that can be applied to
+arbitrary &amp;#39;underlying&amp;#39; weak learners - typically decision trees are
+used. The seminal reference is &lt;a href=&quot;https://en.wikipedia.org/wiki/Jerome_H._Friedman&quot;&gt;Friedman&amp;#39;s&lt;/a&gt; &lt;a href=&quot;http://statweb.stanford.edu/~jhf/ftp/trebst.pdf&quot;&gt;2001 paper&lt;/a&gt; that
+introduced the method.&lt;/p&gt;
+&lt;p&gt;Consider a typical supervised learning problem - we are given as input
+labeled feature vectors $(x, y)$, and seek to estimate a function
+$\hat F(x)$ that approximates the &amp;#39;true&amp;#39; mapping $F^\star$, with
+$F^\star$ minimizing the expected loss $L(y, F(x)$ over some candidate
+functions $\mathcal{F}$ for a loss function $L$.&lt;/p&gt;
+&lt;span class=&quot;more&quot;/&gt;
+
+&lt;p&gt;In gradient boosting, the model assumes an additive expansion
+\begin{equation} F(x, \beta, \alpha) = \sum_{i=1}^{n} \beta_{i} h(x,
+\alpha_{i}) \end{equation} where the $h$ are our weak learners. Thus,
+the predictor from gradient boosting is a linear combination of weak
+learners, and the procedure does two things:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Computes $\beta_m$ - the weight that a given classifier has in
+context of the ensemble.&lt;/li&gt;
+&lt;li&gt;Weights the training examples to compute the $i$-th weak classifier
+$h(\cdot, \alpha_m)$.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;the-algorithm&quot;&gt;The Algorithm&lt;/h2&gt;
+&lt;p&gt;For examples, we&amp;#39;ll use the decision tree training library I wrote in
+Go, available on GitHub at &lt;a href=&quot;https://github.com/ajtulloch/decisiontrees&quot;&gt;https://github.com/ajtulloch/decisiontrees&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The boosting algorithm, in pseudo-code, is quite simple:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;initialize list of weak learners to a singleton list with simple
+prior&lt;/li&gt;
+&lt;li&gt;for each round in 1..numRounds:&lt;/li&gt;
+&lt;li&gt;reweight examples $(x, y)$ to $(x, \tilde y)$ by &amp;#39;upweighting&amp;#39;
+examples that the existing forest poorly predicts&lt;/li&gt;
+&lt;li&gt;estimate new weak classifier $h_i$ on weighted examples&lt;/li&gt;
+&lt;li&gt;compute weight $\beta_i$ of new weak classifier&lt;/li&gt;
+&lt;li&gt;add the pair $(h_i, \beta_i)$ to the forest&lt;/li&gt;
+&lt;li&gt;return forest&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The intuition behind gradient boosting is quite simple - we
+iteratively build a sequence of predictors, and our final predictor is
+a weighted average of these predictors. At each step, we focus on
+adding an incremental classifier that improves the performance of the
+entire ensemble. The technical description is &amp;#39;gradient descent in
+functional space&amp;#39;.&lt;/p&gt;
+&lt;p&gt;Thus, if we have examples that are not well predicted by the current
+ensemble, the next stage will work harder to fit these examples.&lt;/p&gt;
+&lt;h2 id=&quot;example-implementation&quot;&gt;Example Implementation&lt;/h2&gt;
+&lt;p&gt;For an implementation of the above approach, see the &lt;a href=&quot;https://gist.github.com/ajtulloch/7254143&quot;&gt;boosting.go&lt;/a&gt;
+file on GitHub. The loop body is a simple function inlined below:&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7254274.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;There are some complications (stochastic gradient boosting, influence
+trimming), although the core algorithm is as described in the
+pseudocode.&lt;/p&gt;
+&lt;p&gt;In subsequent posts we&amp;#39;ll elaborate on&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Algorithms for training the individual weak learners&lt;/li&gt;
+&lt;li&gt;Boosting and decision tree hyperparameters&lt;/li&gt;
+&lt;li&gt;Speeding up training and prediction&lt;/li&gt;
+&lt;/ul&gt;
+</description></item><item><title>University of Sydney Mathematics Notes</title><link>https://tullo.ch/articles/sydney-mathematics-notes/</link><pubDate>Sun, 11 Nov 2012 00:00:00 -0800</pubDate><guid isPermaLink="true">https://tullo.ch/articles/sydney-mathematics-notes/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;This is a compilation of various sets of lecture notes I created
+during my Bachelors degree in Mathematics at the University of Sydney.
+All &lt;code&gt;.tex&lt;/code&gt; files are available at the
+&lt;a href=&quot;https://github.com/ajtulloch/SydneyUniversityMathematicsNotes&quot;&gt;GitHub repository&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;span class=&quot;more&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;h3 id=&quot;applied-mathematics&quot;&gt;Applied Mathematics&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/AMH3LectureNotes.pdf&quot;&gt;AMH3 - Interest Rate Models&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/AMH4LectureNotes.pdf&quot;&gt;AMH4 - Advanced Option Pricing&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MATH3975LectureNotes.pdf&quot;&gt;MATH 3975 - Financial Mathematics&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;pure-mathematics&quot;&gt;Pure Mathematics&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MATH3961LectureNotes.pdf&quot;&gt;MATH 3961 - Metric Spaces&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MATH3962LectureNotes.pdf&quot;&gt;MATH 3962 - Rings, Fields, and Galois Theory&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MATH3964LectureNotes.pdf&quot;&gt;MATH 3964 - Complex Analysis&lt;/a&gt;
+(with &lt;a href=&quot;https://github.com/gilesgardam&quot;&gt;Giles Gardam&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MATH3968LectureNotes.pdf&quot;&gt;MATH 3968 - Differential Geometry&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MATH3969LectureNotes.pdf&quot;&gt;MATH 3969 - Measure Theory and Fourier Analysis&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/PMH3LectureNotes.pdf&quot;&gt;PMH3 - Functional Analysis&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/PMH8LectureNotes.pdf&quot;&gt;PMH8 - Spectral Theory and PDEs&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;statistics&quot;&gt;Statistics&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MSH2LectureNotes.pdf&quot;&gt;MSH2 - Probability Theory&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/MSH7LectureNotes.pdf&quot;&gt;MSH7 - Applied Probability and SDEs&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/static/STAT3911LectureNotes.pdf&quot;&gt;STAT 3911 - Stochastic Processes and Time Series Analysis&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;computer-science&quot;&gt;Computer Science&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;/static/COMP2907LectureNotes.pdf&quot;&gt;COMP 2907 - Algorithms and Complexity&lt;/a&gt;
+(with &lt;a href=&quot;https://github.com/gilesgardam&quot;&gt;Giles Gardam&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+</description></item><item><title>Elements of Statistical Learning - Chapter 2 Solutions</title><link>https://tullo.ch/articles/elements-of-statistical-learning/</link><pubDate>Thu, 01 Nov 2012 00:00:00 -0700</pubDate><guid isPermaLink="true">https://tullo.ch/articles/elements-of-statistical-learning/</guid><author></author><!-- passing locals.url resolves all relative urls to absolute--><description>&lt;p&gt;The Stanford textbook &lt;a href=&quot;http://statweb.stanford.edu/~tibs/ElemStatLearn/&quot;&gt;Elements of Statistical Learning&lt;/a&gt; by
+&lt;a href=&quot;http://www.stanford.edu/~hastie/&quot;&gt;Hastie&lt;/a&gt;, &lt;a href=&quot;http://statweb.stanford.edu/~tibs/&quot;&gt;Tibshirani&lt;/a&gt;, and &lt;a href=&quot;http://statweb.stanford.edu/~jhf/&quot;&gt;Friedman&lt;/a&gt;
+is an excellent (and &lt;a href=&quot;http://www.stanford.edu/~hastie/local.ftp/Springer/ESLII_print5.pdf&quot;&gt;freely available&lt;/a&gt;) graduate-level
+text in data mining and machine learning. I&amp;#39;m currently working
+through it, and I&amp;#39;m putting my (partial) exercise solutions up for
+anyone who might find them useful. The first set of solutions is for
+Chapter 2, &lt;em&gt;An Overview of Supervised Learning&lt;/em&gt;, introducing least
+squares and &lt;em&gt;k&lt;/em&gt;-nearest-neighbour techniques.&lt;/p&gt;
+&lt;h3 id=&quot;exercise-solutions&quot;&gt;Exercise Solutions&lt;/h3&gt;
+&lt;p&gt;See the solutions in &lt;a href=&quot;/static/ESL-Solutions.pdf&quot;&gt;PDF&lt;/a&gt; format (&lt;a href=&quot;/static/ESL-Chap2Solutions.tex&quot;&gt;source&lt;/a&gt;) for
+a more pleasant reading experience. This webpage was created from the
+LaTeX source using the &lt;a href=&quot;https://tullo.ch/projects/LaTeX2Markdown/&quot;&gt;LaTeX2Markdown&lt;/a&gt;
+utility - check it out on
+&lt;a href=&quot;https://github.com/ajtulloch/LaTeX2Markdown&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&quot;overview-of-supervised-learning&quot;&gt;Overview of Supervised Learning&lt;/h2&gt;
+&lt;h4 id=&quot;exercise-2-1&quot;&gt;Exercise 2.1&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Suppose that each of $K$-classes has an associated target $t_k$,
+  which is a vector of all zeroes, except a one in the $k$-th
+  position. Show that classifying the largest element of $\hat y$
+  amounts to choosing the closest target, $\min_k \| t_k - \hat y
+  \|$ if the elements of $\hat y$ sum to one.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;The assertion is equivalent to showing that
+\begin{equation}
+\text{argmax}_i \hat y_i = \text{argmin}_k \| t_k - \hat y \|
+= \text{argmin}_k \|\hat y - t_k \|^2
+\end{equation}
+by monotonicity of $x \mapsto x^2$ and symmetry of the norm.&lt;/p&gt;
+&lt;p&gt;WLOG, let $\| \cdot \|$ be the Euclidean norm $\| \cdot
+\|_2$. Let $k = \text{argmax}_i \hat y_i$, with $\hat y_k = \max
+y_i$. Note that then $\hat y_k \geq \frac{1}{K}$, since $\sum \hat
+y_i = 1$.&lt;/p&gt;
+&lt;p&gt;Then for any $k&amp;#39; \neq k$ (note that $y_{k&amp;#39;} \leq y_k$), we have
+\begin{align} \| y - t_{k&amp;#39;} \|_2^2 - \| y - t_k \|_2^2 &amp;amp;=
+y_k^2 + \left(y_{k&amp;#39;} - 1 \right)^2 - \left( y_{k&amp;#39;}^2 + \left(y_k -
+1 \right)^2 \right) \\ &amp;amp;= 2 \left(y_k - y_{k&amp;#39;}\right) \\ &amp;amp;\geq 0
+\end{align} since $y_{k&amp;#39;} \leq y_k$ by assumption.&lt;/p&gt;
+&lt;p&gt;Thus we must have&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+  \label{eq:6}
+  \text{argmin}_k \| t_k - \hat y \| = \text{argmax}_i \hat y_i
+\end{equation}&lt;/p&gt;
+&lt;p&gt;as required.&lt;/p&gt;
+&lt;h4 id=&quot;exercise-2-2&quot;&gt;Exercise 2.2&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Show how to compute the Bayes decision boundary for the simulation
+  example in Figure 2.5.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;The Bayes classifier is
+\begin{equation}
+  \label{eq:2}
+  \hat G(X) = \text{argmax}_{g \in \mathcal G} P(g | X = x ).
+\end{equation}&lt;/p&gt;
+&lt;p&gt;In our two-class example $\textbf{orange}$ and $\textbf{blue}$, the
+decision boundary is the set where&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+  \label{eq:5}
+   P(g=\textbf{blue} | X = x) = P(g =\textbf{orange} | X = x) = \frac{1}{2}.
+\end{equation}&lt;/p&gt;
+&lt;p&gt;By the Bayes rule, this is equivalent to the set of points where&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+  \label{eq:4}
+  P(X = x | g = \textbf{blue}) P(g = \textbf{blue}) = P(X = x | g =
+  \textbf{orange}) P(g = \textbf{orange})
+\end{equation}&lt;/p&gt;
+&lt;p&gt;As we know $P(g)$ and $P(X=x|g)$, the decision boundary can be
+calculated.&lt;/p&gt;
+&lt;h4 id=&quot;exercise-2-3&quot;&gt;Exercise 2.3&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Derive equation (2.24)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;TODO&lt;/p&gt;
+&lt;h4 id=&quot;exercise-2-4&quot;&gt;Exercise 2.4&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Consider $N$ data points uniformly distributed in a $p$-dimensional
+  unit ball centered at the origin. Show the the median distance from
+  the origin to the closest data point is given by
+  \begin{equation}
+    \label{eq:7}
+    d(p, N) = \left(1-\left(\frac{1}{2}\right)^{1/N}\right)^{1/p}
+  \end{equation}&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;Let $r$ be the median distance from the origin to the closest data
+point. Then
+\begin{equation}
+  \label{eq:8}
+  P(\text{All $N$ points are further than $r$ from the origin}) = \frac{1}{2}
+\end{equation}
+by definition of the median.&lt;/p&gt;
+&lt;p&gt;Since the points $x_i$ are independently distributed, this implies
+that
+\begin{equation}
+  \label{eq:9}
+   \frac{1}{2} = \prod_{i=1}^N P(\|x_i\| &amp;gt; r)
+\end{equation}
+and as the points $x_i$ are uniformly distributed in the unit ball,
+we have that
+\begin{align}
+  P(\| x_i \| &amp;gt; r) &amp;amp;= 1 - P(\| x_i \| \leq r) \\ &amp;amp;= 1 -
+  \frac{Kr^p}{K} \\ &amp;amp;= 1 - r^p
+\end{align}&lt;/p&gt;
+&lt;p&gt;Putting these together, we obtain that
+\begin{equation}
+  \label{eq:10}
+  \frac{1}{2} = \left(1-r^p \right)^{N}
+\end{equation}
+and solving for $r$, we have
+\begin{equation}
+  \label{eq:11}
+  r = \left(1-\left(\frac{1}{2}\right)^{1/N}\right)^{1/p}
+\end{equation}&lt;/p&gt;
+&lt;h4 id=&quot;exercise-2-5&quot;&gt;Exercise 2.5&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Consider inputs drawn from a spherical multivariate-normal
+distribution $X \sim N(0,\mathbf{1}_p)$. The squared distance from
+any sample point to the origin has a $\chi^2_p$ distribution with
+mean $p$. Consider a prediction point $x_0$ drawn from this
+distribution, and let $a = \frac{x_0}{\| x_0\|}$ be an
+associated unit vector. Let $z_i = a^T x_i$ be the projection of
+each of the training points on this direction.&lt;/p&gt;
+&lt;p&gt;Show that the $z_i$
+are distributed $N(0,1)$ with expected squared distance from the
+origin 1, while the target point has expected squared distance $p$
+from the origin.&lt;/p&gt;
+&lt;p&gt;Hence for $p = 10$, a randomly drawn test point is
+about 3.1 standard deviations from the origin, while all the
+training points are on average one standard deviation along
+direction a. So most prediction points see themselves as lying on
+the edge of the training set.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;Let $z_i = a^T x_i = \frac{x_0^T}{\| x_0 \|} x_i$. Then
+$z_i$ is a linear combination of $N(0,1)$ random variables, and hence
+normal, with expectation zero and variance&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+  \label{eq:12}
+  \text{Var}(z_i) = \| a^T \|^2 \text{Var}(x_i) = \text{Var}(x_i) = 1
+\end{equation}
+as the vector $a$ has unit length and $x_i \sim N(0, 1)$.&lt;/p&gt;
+&lt;p&gt;For each target point $x_i$, the squared distance from the origin is
+a $\chi^2_p$ distribution with mean $p$, as required.&lt;/p&gt;
+&lt;h4 id=&quot;exercise-2-6&quot;&gt;Exercise 2.6&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;Derive equation (2.27) in the notes.&lt;/li&gt;
+&lt;li&gt;Derive equation (2.28) in the notes.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;We have
+\begin{align}
+EPE(x_0) &amp;amp;= E_{y_0 | x_0} E_{\mathcal{T}}(y_0 - \hat y_0)^2
+\\
+&amp;amp;= \text{Var}(y_0|x_0) + E_{\mathcal T}[\hat y_0 - E_{\mathcal
+ T} \hat y_0]^2 + [E_{\mathcal T} - x_0^T \beta]^2 \\
+&amp;amp;= \text{Var}(y_0 | x_0) + \text{Var}_\mathcal{T}(\hat y_0) +
+\text{Bias}^2(\hat y_0).
+\end{align}
+We now treat each term individually. Since the estimator
+is unbiased, we have that the third term is zero. Since $y_0 = x_0^T
+\beta + \epsilon$ with $\epsilon$ an $N(0,\sigma^2)$ random variable,
+we must have $\text{Var}(y_0|x_0) = \sigma^2$.
+The middle term is more difficult. First, note that we have
+\begin{align}
+\text{Var}_{\mathcal T}(\hat y_0) &amp;amp;= \text{Var}_{\mathcal
+ T}(x_0^T \hat \beta) \\ &amp;amp;= x_0^T \text{Var}_{\mathcal T}(\hat
+\beta) x_0 \\ &amp;amp;= E_{\mathcal T} x_0^T \sigma^2 (\mathbf{X}^T
+\mathbf{X})^{-1} x_0
+\end{align} by conditioning (3.8) on $\mathcal T$.&lt;/li&gt;
+&lt;li&gt;TODO&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&quot;exercise-2-7&quot;&gt;Exercise 2.7&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Consider a regression problem with inputs $x_i$ and outputs $y_i$,
+and a parameterized model $f_\theta(x)$ to be fit with least squares.
+Show that if there are observations with &lt;em&gt;tied&lt;/em&gt; or &lt;em&gt;identical&lt;/em&gt; values
+of $x$, then the fit can be obtained from a reduced weighted least
+squares problem.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;This is relatively simple. WLOG, assume that $x_1 = x_2$, and all
+other observations are unique. Then our RSS function in the general
+least-squares estimation is&lt;/p&gt;
+&lt;p&gt;\begin{equation}
+  \label{eq:13}
+  RSS(\theta) = \sum_{i=1}^N \left(y_i - f_\theta(x_i) \right)^2 =
+  \sum_{i=2}^N w_i \left(y_i - f_\theta(x_i) \right)^2
+\end{equation}&lt;/p&gt;
+&lt;p&gt;where
+\begin{equation}
+  \label{eq:14}
+  w_i = \begin{cases} 2 &amp;amp; i = 2 \\ 1 &amp;amp; \text{otherwise} \end{cases}
+\end{equation}&lt;/p&gt;
+&lt;p&gt;Thus we have converted our least squares estimation into a reduced
+weighted least squares estimation. This minimal example can be easily
+generalised.&lt;/p&gt;
+&lt;h4 id=&quot;exercise-2-8&quot;&gt;Exercise 2.8&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Suppose that we have a sample of $N$ pairs $x_i, y_i$, drawn IID
+from the distribution such that \begin{align} x_i \sim h(x), \\
+y_i = f(x_i) + \epsilon_i, \\ E(\epsilon_i) = 0, \\
+\text{Var}(\epsilon_i) = \sigma^2. \end{align} We construct an
+estimator for $f$ linear in the $y_i$,
+\begin{equation}
+  \label{eq:16}
+  \hat f(x_0) = \sum_{i=1}^N \ell_i(x_0; \mathcal X) y_i
+\end{equation}
+where the weights $\ell_i(x_0; X)$ do not depend on the $y_i$,
+but do depend on the training sequence $x_i$ denoted by $\mathcal
+X$.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Show that the linear regression and $k$-nearest-neighbour
+regression are members of this class of estimators. Describe
+explicitly the weights $\ell_i(x_0; \mathcal X)$ in each of these
+cases.&lt;/li&gt;
+&lt;li&gt;Decompose the conditional mean-squared error
+\begin{equation}
+\label{eq:17}
+E_{\mathcal Y | \mathcal X} \left( f(x_0) - \hat f(x_0) \right)^2
+\end{equation}
+into a conditional squared bias and a conditional variance
+component. $\mathcal Y$ represents the entire training sequence of
+$y_i$.&lt;/li&gt;
+&lt;li&gt;Decompose the (unconditional) MSE
+\begin{equation}
+\label{eq:18}
+E_{\mathcal Y, \mathcal X}\left(f(x_0) - \hat f(x_0) \right)^2
+\end{equation}
+into a squared bias and a variance component.&lt;/li&gt;
+&lt;li&gt;Establish a relationship between the square biases and variances in
+the above two cases.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Recall that the estimator for $f$ in the linear regression case is
+given by
+\begin{equation}
+\label{eq:19}
+\hat f(x_0) = x_0^T \beta
+\end{equation}
+where $\beta = (X^T X)^{-1} X^T y$. Then we can simply write
+\begin{equation}
+\label{eq:20}
+\hat f(x_0) = \sum_{i=1}^N \left( x_0^T (X^T X)^{-1} X^T \right)_i y_i.
+\end{equation}
+Hence
+\begin{equation}
+\label{eq:21}
+\ell_i(x_0; \mathcal X) = \left( x_0^T (X^T X)^{-1} X^T \right)_i.
+\end{equation}
+In the $k$-nearest-neighbour representation, we have
+\begin{equation}
+\label{eq:22}
+\hat f(x_0) = \sum_{i=1}^N \frac{y_i}{k} \mathbf{1}_{x_i \in N_k(x_0)}
+\end{equation}
+where $N_k(x_0)$ represents the set of $k$-nearest-neighbours of
+$x_0$. Clearly,
+\begin{equation}
+\label{eq:23}
+\ell_i(x_0; \mathcal X) = \frac{1}{k} \mathbf{1}_{x_i \in N_k(x_0)}
+\end{equation}&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;TODO&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;TODO&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;TODO&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&quot;exercise-2-9&quot;&gt;Exercise 2.9&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Compare the classification performance of linear regression and
+$k$-nearest neighbour classification on the &lt;code&gt;zipcode&lt;/code&gt; data. In
+particular, consider on the &lt;code&gt;2&lt;/code&gt;&amp;#39;s and &lt;code&gt;3&lt;/code&gt;&amp;#39;s, and $k = 1, 3, 5, 7, 15$.
+Show both the training and test error for each choice.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h4 id=&quot;proof&quot;&gt;Proof&lt;/h4&gt;
+&lt;p&gt;Our implementation in R and graphs are attached.&lt;/p&gt;
+&lt;script src=&quot;https://gist.github.com/ajtulloch/7516548.js&quot;&gt;&lt;/script&gt;
+
+&lt;img class=&quot;R&quot; src=&quot;exercise_2_8.png&quot;/&gt;
+
+&lt;h4 id=&quot;exercise-2-10&quot;&gt;Exercise 2.10&lt;/h4&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Consider a linear regression model with $p$ parameters, fitted by
+OLS to a set of trainig data $(x_i, y_i)_{1 \leq i \leq N}$ drawn
+at random from a population. Let $\hat \beta$ be the least squares
+estimate. Suppose we have some test data $(\tilde x_i, \tilde
+y_i)_{1 \leq i \leq M}$ drawn at random from the same population
+as the training data. If $R_{tr}(\beta) = \frac{1}{N} \sum_{i=1}^N
+\left(y_i \beta^T x_i \right)^2$ and $R_{te}(\beta) = \frac{1}{M}
+\sum_{i=1}^M \left( \tilde y_i - \beta^T \tilde x_i \right)^2$,
+prove that
+\begin{equation}
+  \label{eq:15}
+  E(R_{tr}(\hat \beta)) \leq E(R_{te}(\hat \beta))
+\end{equation}
+where the expectation is over all that is random in each expression.&lt;/p&gt;
+&lt;/blockquote&gt;
+</description></item></channel></rss>

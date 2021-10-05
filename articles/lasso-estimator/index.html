@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>The LASSO Estimator &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/lasso-estimator/">The LASSO Estimator</a></h1><div class="post-meta"><p class="date">31 May 2014</p></div><div class="the-content"><section class="content"><p>As far as I can tell, the LASSO estimator is the closest thing we have
+to a miracle in modern statistics.</p>
+<p>The LASSO estimator is defined as a solution to the minimization
+problem $\frac{1}{n} \| Y - X \theta \|_2^2 + \lambda \| \theta \|_1$
+over $\mathbb{R}^p$. The key insight here is that this is a convex
+problem in $\theta$ - this follows from both norms being convex and
+the sum of convex functions being convex.  This allows us to design
+efficient solvers for this problem and thus handle large-scale
+problems - see, for example, ADMM, iterative shrinkage, gradient
+projection, etc.</p>
+<p>The LASSO can be viewed as convex relaxation of a very natural problem
+in statistical estimation - finding the best $k$-sparse vector to
+minimize $\| Y - X \theta \| + \lambda \| \theta \|_0$, where the
+$L_0$ norm (indeed, not actually a norm) is to be interpreted as the
+number of non-zero coefficients in $\theta$. This comes from problems
+such as in signal processing and genomics array data where we have $p$
+(the number of covariates) significantly larger than $n$, the number of
+observations. In this case, the usual least-squares estimation theory
+dating back to Gauss does not apply ($X$ cannot have full rank), and
+we must find other alternatives. The brute-force approach is
+combinatorially hard (we must check each $p \choose k$ sets of
+supports, which takes time exponential in $p$).</p>
+<p>Thus, the LASSO objective can be seen as a natural convex relation of
+the original problem (e.g. taking $p$ from $0$ upwards and stopping as
+soon as $\| \theta \|_p$ is convex).</p>
+<p>The &quot;miracle&quot; I refer to is the amazing result of Candes &amp; Tao in a
+series of papers starting in 2005 that established that for a large
+class of observation matrices $X$, we have the amazing result that
+with very high probability, solving the LASSO problem is equivalent to
+solving the original combinatorially hard problem.  Formally, we have
+the following theorem, which contains a germ of the restricted
+isometry property.</p>
+<h3 id="the-optimality-of-the-lasso-estimator">The Optimality of the LASSO estimator</h3>
+<blockquote>
+<p>Let $\theta_0$ be $k$-sparse with support $S_0$, and let $Y = X
+\theta + \epsilon$, with $\epsilon \sim N(0, \sigma^2 I_n)$. Let
+$\tilde \theta$ be the LASSO estimator of $(Y, X)$ with parameter
+$\lambda = 4 \overline \sigma \sqrt{\frac{t^2 + 2 \log p}{n}}$.
+Assume that $\| \tilde \theta_{S_0} - \theta_0 \|_1^2 \leq k
+r_0 (\tilde \theta - \theta_0)^T \hat \Sigma (\tilde \theta -
+\theta_0)$ with probability at least $1 - \beta$ for some $r_0$.
+Then with probability at least $1 - \beta - e^{-\frac{t^2}{2}}$, we
+have that \begin{equation} \frac{1}{n} \| X(\tilde \theta -
+\theta_0) \|_2^2 + \lambda \| \tilde \theta - \theta_0 \| \leq 4
+k r_0 \lambda^2 \end{equation}</p>
+</blockquote>
+<h4 id="proof">Proof</h4>
+<p>The proof is fairly elementary, requiring only a basic concentration
+of measure inequality for subgaussian random variables. The key step
+is recognizing that we can bound the event $\max_{j} \frac{2}{n} \|
+(\epsilon^T X)_j \| \geq \frac{\lambda}{2}$ on a set of measure less
+than $e^-\frac{t^2}{2}$. Once we have this result, we can apply the
+triangle inequality and the restricted isometry condition in the
+theorem to obtain the desired result.</p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

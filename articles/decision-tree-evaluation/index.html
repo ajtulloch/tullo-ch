@@ -1,0 +1,194 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>The Performance of Decision Tree Evaluation Strategies &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/decision-tree-evaluation/">The Performance of Decision Tree Evaluation Strategies</a></h1><div class="post-meta"><p class="date">2 December 2013</p></div><div class="the-content"><section class="content"><p>UPDATE: Compiled evaluation is now implemented for
+<a href="http://scikit-learn.org">scikit-learn</a> regression tree/ensemble
+models, available at
+<a href="https://github.com/ajtulloch/sklearn-compiledtrees">https://github.com/ajtulloch/sklearn-compiledtrees</a> or <code>pip install
+sklearn-compiledtrees</code>.</p>
+<p><a href="http://tullo.ch/articles/speeding-up-decision-tree-training/">Our previous article</a> on decision trees dealt
+with techniques to speed up the training process, though often the
+performance-critical component of the machine learning pipeline is the
+prediction side. Training takes place offline, whereas predictions are
+often in the hot path - consider ranking documents in response to a
+user query <em>a-la</em> Google, Bing, etc. Many candidate documents need to
+be scored as quickly as possible, and the top <em>k</em> results returned to
+the user.</p>
+<p>Here, we&#39;ll focus on on a few methods to improve the performance of
+evaluating an ensemble of decision trees - encompassing random
+forests, gradient boosted decision trees, AdaBoost, etc.</p>
+<p>There are three methods we&#39;ll focus on here:</p>
+<ul>
+<li>Recursive tree walking (<em>naive</em>)</li>
+<li>Flattening the decision tree (<em>flattened</em>)</li>
+<li>Compiling the tree to machine code (<em>compiled</em>)</li>
+</ul>
+<p>We&#39;ll show that choosing the right strategy can improve evaluation
+time by more than 2x - which can be a very significant performance
+improvement indeed.</p>
+<p>All code (implementation, drivers, analysis scripts) are available on
+GitHub at the <a href="https://github.com/ajtulloch/decisiontree-performance">decisiontrees-performance</a> repository.</p>
+<h2 id="naive-method">Naive Method</h2>
+<p>Superficially, <a href="http://en.wikipedia.org/wiki/Decision_tree">decision tree</a> evaluation is fairly simple - given a
+feature vector, recursively walk down the tree, using the given
+feature vector to choose whether to proceed down the left branch or
+the right branch at each point.  When we reach a leaf, we just return
+the value at the leaf.</p>
+<p>In Haskell,</p>
+<script src="https://gist.github.com/ajtulloch/7749394.js"></script>
+
+<p>In C++,</p>
+<script src="https://gist.github.com/ajtulloch/7749384.js"></script>
+
+<p>From now on, we&#39;ll focus on the C++ implementation, and how we can
+speed this up.</p>
+<p>This approach has a few weaknesses - data cache behavior is
+pretty-much the worst case, since we&#39;re jumping all over our memory to
+go from one node to the next.  Given the cost of cache misses on
+modern CPU architectures, we&#39;ll most likely see some performance
+improvements from optimizing this approach.</p>
+<h2 id="flattened-tree-method">Flattened Tree Method</h2>
+<p>A nice trick to improve cache locality is to lay out data out in a
+flattened form, and jumping in between locations in our flattened
+representation. This is analogous to
+<a href="http://en.wikipedia.org/wiki/Binary_heap#Heap_implementation">representing a binary heap as an array</a>.</p>
+<p>The technique is just to flatten the tree out, and so moving from the
+parent to the child in our child will often mean accessing memory in
+the same cache line - and given the cost of cache misses on modern CPU
+architectures, minimizing these can lead to significant performance
+improvements.  Thus our</p>
+<p>We implement two strategies along this approach:</p>
+<ul>
+<li><em>Piecewise flattened</em>, where for an ensemble of weak learners, we
+store a vector of flattened trees - with one element for each weak learner.</li>
+<li><em>Contiguous flattened</em>, where we concatenate the flattened
+ representation of each weak learner into a single vector, and store
+ the indices of the root of each learner.  In some circumstances,
+ this may improve cache locality even more, though we see that it is
+ outperformed in most circumstances by the piecewise flattened approach.</li>
+</ul>
+<p>Our implementation is given below:</p>
+<script src="https://gist.github.com/ajtulloch/7749947.js"></script>
+
+<h2 id="compiled-tree-method">Compiled Tree Method</h2>
+<p>A really cool technique that has been known for years is generating C
+code representing a decision tree, compiling it into a shared library,
+and then loading the compiled decision tree function via <code>dlopen(3)</code>.
+I found <a href="http://courses.cs.washington.edu/courses/cse501/10au/compile-machlearn.pdf">a 2010 UWash student report</a>
+describing this technique, though the earliest reference I&#39;ve seen is
+from approximately 2000 in a presentation on Alta Vista&#39;s machine
+learning system (which I unfortunately cannot find online).</p>
+<p>The gist of this approach is to traverse the trees in the ensemble,
+generating C code as we go. For example, if a regression stump has the
+logic &quot;return 0.02 if feature 5 is less than 0.8, otherwise return
+0.08.&quot;, we would generate the code:</p>
+<pre><code>float evaluate(float* feature_vector) {
+  if (feature_vector[5] &lt; 0.8) {
+    return 0.02;
+  } else {
+    return 0.08;
+  }
+}</code></pre><p>For example, here is the code generated by a randomly constructed
+ensemble with two trees:</p>
+<script src="https://gist.github.com/ajtulloch/7754969.js"></script>
+
+<p>The core C++ function used to generate this is given below:</p>
+<script src="https://gist.github.com/ajtulloch/7755257.js"></script>
+
+<p>For evaluation, we just use the <code>dlopen</code> and <code>dlsym</code> to extract a
+function pointer from the generated <code>.so</code> file.</p>
+<script src="https://gist.github.com/ajtulloch/7755126.js"></script>
+
+
+<p>We can examine the evaluation time of each strategy at a fixed tree depth
+and number of features, and see that at these levels, we have that the
+compiled strategy is significantly faster.  Note that strategies scale
+roughly linearly in the number of weak learners, as expected.</p>
+<p><img src="/articles/decision-tree-evaluation/all_snapshot.png" alt="Evaluation time of different strategies for fixed depth and number of features"></p>
+<h2 id="performance-evaluation">Performance Evaluation</h2>
+<p>As <a href="http://courses.cs.washington.edu/courses/cse501/10au/compile-machlearn.pdf">the student report</a> indicates, the
+relative performance of each strategy depends on the size of the
+trees, the number of trees, and the number of features in the given
+feature vector.</p>
+<p>Our methodology is to generate a random ensemble with a given depth,
+number of trees, and number of features, construct the evaluators of
+this tree for each strategy, and measure the evaluation time of each
+strategy across a set of randomly generated feature vectors. (We also
+check correctness of the implementations via a <a href="http://en.wikipedia.org/wiki/QuickCheck">QuickCheck</a> style
+test that each strategy computes the same result for a given feature vector).</p>
+<p>\begin{align}
+  \text{num_trees} &amp;\in [1, 1000] \\
+  \text{depth} &amp;\in [1, 6] \\
+  \text{num_features} &amp;\in [1, 10000]
+\end{align}</p>
+<h3 id="visualization">Visualization</h3>
+<p>We look at trellis plots of the evaluation time against number of
+trees, for the various evaluation strategies.</p>
+<p><a href="/articles/decision-tree-evaluation/subset_trellis.png"><img src="/articles/decision-tree-evaluation/subset_trellis.png" alt=""></a></p>
+<p>The following diagram is the entire parameter space explored (click
+for more detail).</p>
+<p><a href="/articles/decision-tree-evaluation/all_trellis.png"><img src="/articles/decision-tree-evaluation/all_trellis.png" alt=""></a></p>
+<h3 id="regression">Regression</h3>
+<p>To quantify these effects on the cost of evaluation for the different
+algorithms, we fit a linear model against these covariates,
+conditioned on the algorithm used. Conceptually, we are just splitting
+our dataset by the algorithm used, and fitting a separate linear model
+on each of these subsets.</p>
+<script src="https://gist.github.com/ajtulloch/7755272.js"></script>
+
+<p>(as an aside - the R formula syntax is a great example of a DSL done
+right.)</p>
+<p>We see $R^2$ values ~0.75-0.85 with all coefficients, with almost all coefficients
+statistically different from zero at the 0.1% level - so we can draw
+some provisional inferences from this model.</p>
+<p>We note:</p>
+<ul>
+<li>the compiled tree strategy is much more sensitive to the depth of
+the decision tree, which aligns with observations made in
+<a href="http://courses.cs.washington.edu/courses/cse501/10au/compile-machlearn.pdf">the student report</a>.</li>
+<li>the compiled tree strategy and the naive strategy are also more
+sensitive to the number of trees than the flattened evaluation
+strategy.  Thus for models with huge numbers of trees, the flattened
+evaluation may be the best.</li>
+<li>The intercept term for the compiled tree is the most negative - thus
+for &#39;small&#39; models - low number of trees of small depth, the
+compiled tree approach may be the best evaluation strategy.</li>
+</ul>
+<script src="https://gist.github.com/ajtulloch/7792639.js"></script>
+
+<h2 id="conclusions">Conclusions</h2>
+<p>We&#39;ve implemented and analyzed the performance of a selection of
+decision tree evaluation strategies. It appears there are two main
+conclusions:</p>
+<ul>
+<li>For small models - &lt;200 or so trees with average depth &lt;2, the
+compiled evaluation strategy is the fastest.</li>
+<li>For larger models, the piecewise flattened evaluation strategy is
+most likely the fastest.</li>
+<li>Choosing the right evaluation strategy can, in the right places,
+improve performance by greater than 2x.</li>
+</ul>
+<p>Next, I&#39;ll look at implementing these methods in some commonly used
+open-source ML packages, such as <a href="http://scikit-learn.org/stable/">scikit-learn</a>.</p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>

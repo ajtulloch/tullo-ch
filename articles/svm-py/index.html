@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,user-scalable=no"><meta description="Andrew Tulloch - Machine Learning, Statistics, Systems"><meta keywords="andrew tulloch,tulloch,machine learning,statistics,mathematics,systems,programming"><title>A basic soft-margin kernel SVM implementation in Python &mdash;Andrew Tulloch</title><link rel="alternate" href="https://tullo.ch/feed.xml" type="application/rss+xml" title="Machine Learning, Statistics, Systems"><link rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/css/style.css"><script type="text/x-mathjax-config">MathJax.Hub.Config({
+  tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+  TeX: { equationNumbers: {autoNumber: "AMS"} }
+});</script><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src=("https:"===e.location.protocol?"https:":"http:")+'//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f);b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==
+typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.track_charge people.clear_charges people.delete_user".split(" ");for(g=0;g<i.length;g++)f(c,i[g]);
+b._i.push([a,e,d])};b.__SV=1.2}})(document,window.mixpanel||[]);
+mixpanel.init("9883d2ddb1fd32faf91fa16afe22a008");
+mixpanel.track('Page View', {'page name' : document.title, 'url' : window.location.pathname});
+</script><script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-44466528-2', 'tullo.ch');
+ga('send', 'pageview');
+</script></head><body><header id="header"><div class="container"><div class="gravatar"><img class="gravatar" src="http://www.gravatar.com/avatar/c4ade7596c93b909699000666b47bc53?s=200"></div><div id="brand"><h1 class="site-title"><a class="blog-title" href="https://tullo.ch">Andrew Tulloch</a><span>—</span><span>Machine Learning, Statistics, Systems</span></h1></div><nav class="site-navigation main-navigation" role="navigation"><a href="/about/">About</a> | <a href="/academic/">Academic</a> | <a href="https://github.com/ajtulloch">GitHub</a> | <a href="/static/cv.pdf">CV</a></nav><div class="clear"></div></div></header><div class="container" id="main"><article class="post"><h1 class="title"><a href="/articles/svm-py/">A basic soft-margin kernel SVM implementation in Python</a></h1><div class="post-meta"><p class="date">26 November 2013</p></div><div class="the-content"><section class="content"><p><a href="http://en.wikipedia.org/wiki/Support_vector_machine">Support Vector Machines</a> (SVMs) are a family of nice supervised learning
+algorithms that can train classification and regression models
+efficiently and with very good performance in practice.</p>
+<p>SVMs are also rooted in convex optimization and Hilbert space theory,
+and there is a lot of beautiful mathematics in the derivation of
+various aspects of the training algorithm, which we will go into in
+subsequent posts.</p>
+<p>For now, we&#39;ll just give an introduction to the basic theory of
+soft-margin kernel SVMs. The classical treatment is to start with
+hard-margin linear SVMs, then introduce the kernel trick and the
+soft-margin formulation, so this is somewhat faster-moving than other
+presentations.</p>
+<h2 id="mathematical-formulation">Mathematical Formulation</h2>
+<p>We consider our training set to be</p>
+<p>\begin{equation}
+D = { (\mathbf{x}_{i}, y_{i}), \mathbf{x} \in \mathbb{R}^d, y \in \{ -1, 1 \}
+}.
+\end{equation}</p>
+<p>The key idea is that we seek to find a hyperplane $w$ separating
+our data - and maximimize the <em>margin</em> of this hyperplane to optimize
+decision-theoretic metrics.</p>
+<p>Let $\kappa$ be a kernel function on $\mathbb{R}^d \times
+\mathbb{R}^d$ - a function such that the matrix $K$ with $K_{ij} =
+\kappa(x_i, x_j)$ is positive semidefinite.  A key property of such
+kernel functions is that there exists a map $\nu$ such that $\langle
+\nu(x), \nu(y) \rangle = \kappa(x, y)$.  One can think of $\nu$ as
+mapping our input features into a higher dimensional output space.</p>
+<p>We can show that for a given feature mapping $\nu$ satisfying the
+previous condition, the Lagrangian for the problem of finding the
+maximum margin hyperplane takes the form:</p>
+<p>\begin{equation}
+\inf_{z \in \mathbb{R}^n} \frac{1}{2} \left| \sum_{i=1}^{n} y_i \nu(x_i)
+z_i \right|_2^2 - e^T z
+\end{equation}
+subject to $z \geq 0$ and $\langle z, y \rangle = 0$.</p>
+<p>Given a resulting vector of Lagrange multipliers $z$, we find that
+most $z$ are zero. This comes from the complementary slackness
+conditions in our optimization problem - either $(x_i, y_i)$ is on the
+maximum margin (and so corresponding Lagrange multiplier is nonzero),
+or it is not on the margin (and so the Lagrange multiplier is zero).</p>
+<p>The prediction of a given feature vector $x$ takes the form
+\begin{align}
+  \label{eq:1}
+  \langle w, \nu(x) \rangle &amp;= \sum_{i=1}^{n} z_{i} y_{i} \langle \nu(x_{i}),
+  \nu(x) \rangle \
+  &amp;= \sum_{i=1}^{n} z_{i} y_{i} \kappa(x_{i}, x)
+\end{align} where we can take the sum over only the non-zero $z_{i}$.</p>
+<p>This yields a very efficient prediction algorithm - once we have
+trained our SVM, a large amount of the training data (those samples
+with zero Lagrangian multipliers) can be removed.</p>
+<p>There are more complications (handling the bias term, handling
+non-separable datasets), but this is the gist of the algorithm.</p>
+<h2 id="implementation">Implementation</h2>
+<p>The full implementation of the training (using <a href="http://cvxopt.org/"><code>cvxopt</code></a> as a
+quadratic program solver) in Python is given below:</p>
+<script src="https://gist.github.com/ajtulloch/7655363.js"></script>
+
+<p>The code is fairly self-explanatory, and follows the given training
+algorithm quite closely.  To compute our Lagrange multipliers, we
+simply construct the Gram matrix and solve the given QP.  We then pass
+our trained support vectors and their corresponding Lagrange
+multipliers and weights to the <code>SVMPredictor</code>, whose implementation is
+given below.</p>
+<script src="https://gist.github.com/ajtulloch/7655399.js"></script>
+
+<p>This simply implements the above prediction equation.</p>
+<p>A sample list of kernel functions are given in</p>
+<script src="https://gist.github.com/ajtulloch/7655415.js"></script>
+
+<h2 id="demonstration">Demonstration</h2>
+<p>We demonstrate drawing pairs of independent standard normal variables
+as features, and label $y_i = sign(\sum x)$.  This is trivially
+linearly seperable, so we train a linear SVM (where $\kappa(x_i, x_j) =
+\langle x_i, x_j \rangle$) on the sample data.</p>
+<p>We then visualize the samples and decision boundary of the SVM on this
+dataset, using <a href="http://matplotlib.org/"><code>matplotlib</code></a>. See <a href="https://gist.github.com/ajtulloch/7655467">this gist</a> for
+details on the implementation.</p>
+<p>An example output of this demonstration is given below:</p>
+<p><img src="http://i.imgur.com/yy0oUVk.png" alt="SVM Demonstration"></p>
+<h2 id="more-information">More Information</h2>
+<p>See the <a href="https://github.com/ajtulloch/svmpy"><code>svmpy</code></a> library on GitHub for all code used in this post.</p>
+</section></div><div class="meta clearfix"></div><div class="comments"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'tulloch';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article></div><footer><div class="container"><p class="copyright">&copy;2021 Andrew Tulloch</p></div></footer></body></html>
